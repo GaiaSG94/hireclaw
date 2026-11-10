@@ -19,6 +19,7 @@ pub struct SolvencyView {
     pub buckets: Buckets,
     pub withdrawable_total: U128,
     pub pending_out_total: U128,
+    pub legacy_escrow: U128,
     pub sum: U128,
     pub balanced: bool,
 }
@@ -73,6 +74,23 @@ impl HireclawContract {
         self.pay_out(caller, withdraw_amt)
     }
 
+    /// Le propriétaire récupère le séquestre hérité (USDC déposés au contrat avant une
+    /// réinitialisation). Le jeton refuse le transfert s'il n'y a rien : le callback
+    /// rend alors les fonds.
+    #[payable]
+    pub fn sweep_to_owner(&mut self, amount: Option<U128>) -> Promise {
+        let caller = env::predecessor_account_id();
+        if caller != self.owner {
+            env::panic_str(ERR_NOT_OWNER);
+        }
+        let value = amount.map(|a| a.0).unwrap_or(self.legacy_escrow);
+        if value == 0 || value > self.legacy_escrow {
+            env::panic_str(ERR_INSUFFICIENT);
+        }
+        self.legacy_escrow -= value;
+        self.pay_out(caller, value)
+    }
+
     pub fn get_job(&self, job_id: String) -> Option<Job> {
         self.jobs.get(&job_id)
     }
@@ -112,7 +130,8 @@ impl HireclawContract {
             pending_out_total += self.pending_out.get(&key).unwrap_or(0);
         }
         let bucket_total = self.buckets.total();
-        let sum = payroll_held + margins_held + bucket_total + withdrawable_total + pending_out_total;
+        let legacy = self.legacy_escrow;
+        let sum = payroll_held + margins_held + bucket_total + withdrawable_total + pending_out_total + legacy;
         SolvencyView {
             balance: U128(self.balance),
             payroll_held: U128(payroll_held),
@@ -120,6 +139,7 @@ impl HireclawContract {
             buckets: self.buckets.clone(),
             withdrawable_total: U128(withdrawable_total),
             pending_out_total: U128(pending_out_total),
+            legacy_escrow: U128(legacy),
             sum: U128(sum),
             balanced: sum == self.balance,
         }

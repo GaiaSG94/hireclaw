@@ -17,3 +17,5 @@ near-sdk = { version = "5", features = ["unit-testing", "legacy"] }
 [[test]]
 name = "t01_sandbox"
 path = "tests/t01_sandbox.rs"
+
+[workspace]

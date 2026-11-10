@@ -7,6 +7,38 @@ mod tests {
     use near_sdk::test_utils::VMContextBuilder;
     use near_sdk::{env, testing_env, AccountId};
 
+
+// ------------------------------------------------------------------ bons signés
+use ed25519_dalek::{Signer, SigningKey};
+
+fn agent_keypair() -> (SigningKey, String) {
+    let secret = SigningKey::from_bytes(&[7u8; 32]);
+    let public = hex::encode(secret.verifying_key().to_bytes());
+    (secret, public)
+}
+
+fn sign_ticket(secret: &SigningKey, ticket: &crate::claim::Ticket) -> String {
+    let payload = crate::claim::canonical_payload(ticket);
+    hex::encode(secret.sign(&payload).to_bytes())
+}
+
+fn make_ticket(agent: AccountId, worker: AccountId, job_id: &str, task_id: &str, amount: u128, issued_ms: u64) -> crate::claim::Ticket {
+    crate::claim::Ticket {
+        job_id: job_id.to_string(),
+        task_id: task_id.to_string(),
+        worker,
+        amount: U128(amount),
+        reason: "le silence vaut paiement".to_string(),
+        issued_ms,
+        agent,
+        signature: String::new(),
+    }
+}
+
+fn now_ms() -> u64 {
+    env::block_timestamp_ms()
+}
+
     fn accounts() -> (AccountId, AccountId, AccountId, AccountId, AccountId) {
         (
             "owner.near".parse().unwrap(),
@@ -15,6 +47,20 @@ mod tests {
             "client.near".parse().unwrap(),
             "worker1.near".parse().unwrap(),
         )
+    }
+
+    const BASE_NS: u64 = 1_700_000_000_000_000_000;
+
+    fn set_context(account: &AccountId) {
+        context_at(account, 0);
+    }
+
+    /// Change l'appelant et l'horloge (en ms depuis la base) sans perdre l'autre.
+    fn context_at(account: &AccountId, extra_ms: u64) {
+        let mut builder = VMContextBuilder::new();
+        builder.predecessor_account_id(account.clone());
+        builder.block_timestamp(BASE_NS + extra_ms * 1_000_000);
+        testing_env!(builder.build());
     }
 
     fn new_contract() -> HireclawContract {
@@ -291,5 +337,98 @@ mod tests {
         let solv = c.get_solvency();
         assert_eq!(solv.balance.0, 1_200_000);
         assert_eq!(solv.balance.0, solv.sum.0, "solvency invariant must hold");
+    }
+
+    #[test]
+    fn test_claim_unpaid_pays_after_the_delay() {
+        let mut c = new_contract();
+        let jid = order_default_job(&mut c);
+        let (_, agent, _, _, w1) = accounts();
+        let (secret, pk) = agent_keypair();
+        set_context(&agent);
+        c.accept_job(jid.clone(), U128(20_000), "dummy".into());
+        let _ = c.hire(w1.clone());
+        c.set_agent_key(pk);
+
+        let issued = now_ms();
+        let mut ticket = make_ticket(agent.clone(), w1.clone(), &jid, "t-silence", 20_000, issued);
+        ticket.signature = sign_ticket(&secret, &ticket);
+
+        // On avance de 121 s puis le travailleur réclame
+        context_at(&w1, 121_000);
+        let paid = c.claim_unpaid(ticket.clone());
+        assert_eq!(paid.0, 20_000);
+        assert_eq!(c.get_worker(w1).unwrap().tasks_paid, 1);
+        assert_eq!(c.get_solvency().balanced, true);
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_NOT_DUE")]
+    fn test_claim_unpaid_too_early() {
+        let mut c = new_contract();
+        let jid = order_default_job(&mut c);
+        let (_, agent, _, _, w1) = accounts();
+        let (secret, pk) = agent_keypair();
+        set_context(&agent);
+        c.accept_job(jid.clone(), U128(20_000), "dummy".into());
+        let _ = c.hire(w1.clone());
+        c.set_agent_key(pk);
+        let mut ticket = make_ticket(agent.clone(), w1.clone(), &jid, "t-early", 20_000, now_ms());
+        ticket.signature = sign_ticket(&secret, &ticket);
+        set_context(&w1);
+        c.claim_unpaid(ticket);
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_BAD_SIGNATURE")]
+    fn test_claim_unpaid_bad_signature() {
+        let mut c = new_contract();
+        let jid = order_default_job(&mut c);
+        let (_, agent, _, _, w1) = accounts();
+        let rogue = SigningKey::from_bytes(&[8u8; 32]);
+        let (_real, real_pk) = agent_keypair();
+        set_context(&agent);
+        c.accept_job(jid.clone(), U128(20_000), "dummy".into());
+        let _ = c.hire(w1.clone());
+        c.set_agent_key(real_pk);
+        let mut ticket = make_ticket(agent.clone(), w1.clone(), &jid, "t-forged", 20_000, now_ms() - 200_000);
+        ticket.signature = sign_ticket(&rogue, &ticket);
+        context_at(&w1, 0);
+        c.claim_unpaid(ticket);
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_ALREADY_SETTLED")]
+    fn test_claim_unpaid_twice() {
+        let mut c = new_contract();
+        let jid = order_default_job(&mut c);
+        let (_, agent, _, _, w1) = accounts();
+        let (secret, pk) = agent_keypair();
+        set_context(&agent);
+        c.accept_job(jid.clone(), U128(20_000), "dummy".into());
+        let _ = c.hire(w1.clone());
+        c.set_agent_key(pk);
+        let mut ticket = make_ticket(agent.clone(), w1.clone(), &jid, "t-twice", 20_000, now_ms());
+        ticket.signature = sign_ticket(&secret, &ticket);
+        context_at(&w1, 121_000);
+        c.claim_unpaid(ticket.clone());
+        c.claim_unpaid(ticket);
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_PAY_ABOVE_MAX")]
+    fn test_claim_unpaid_amount_out_of_bounds() {
+        let mut c = new_contract();
+        let jid = order_default_job(&mut c);
+        let (_, agent, _, _, w1) = accounts();
+        let (secret, pk) = agent_keypair();
+        set_context(&agent);
+        c.accept_job(jid.clone(), U128(20_000), "dummy".into());
+        let _ = c.hire(w1.clone());
+        c.set_agent_key(pk);
+        let mut ticket = make_ticket(agent.clone(), w1.clone(), &jid, "t-greedy", 1_000_000, now_ms());
+        ticket.signature = sign_ticket(&secret, &ticket);
+        context_at(&w1, 121_000);
+        c.claim_unpaid(ticket);
     }
 }

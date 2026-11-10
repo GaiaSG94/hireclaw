@@ -24,6 +24,7 @@ pub const ERR_ALREADY_DELIVERED: &str = "ERR_ALREADY_DELIVERED";
 pub const ERR_UNKNOWN_JOB: &str = "ERR_UNKNOWN_JOB";
 pub const ERR_INSUFFICIENT: &str = "ERR_INSUFFICIENT";
 pub const ERR_BAD_ORDER: &str = "ERR_BAD_ORDER";
+pub const ERR_BAD_SIGNATURE: &str = "ERR_BAD_SIGNATURE";
 
 pub const DAY_NS: u64 = 86_400_000_000_000;
 

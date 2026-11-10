@@ -5,6 +5,7 @@ use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
 
 pub mod admin;
+pub mod claim;
 pub mod errors;
 pub mod models;
 pub mod order;
@@ -30,11 +31,26 @@ pub struct BatchItem {
     pub gold: bool,
 }
 
+/// Préfixes de stockage versionnés : un re-init part sur des clés neuves, donc
+/// aucune collection héritée ne peut survivre à un changement de forme d'état.
+const P_JOBS: &[u8] = b"j2";
+const P_JOB_KEYS: &[u8] = b"k2";
+const P_WORKERS: &[u8] = b"w2";
+const P_WORKER_KEYS: &[u8] = b"x2";
+const P_SETTLED: &[u8] = b"s2";
+const P_CLAIMED: &[u8] = b"c2";
+const P_LEDGER: &[u8] = b"l2";
+const P_WITHDRAWABLE: &[u8] = b"m2";
+const P_PENDING: &[u8] = b"p2";
+const P_PAYEES: &[u8] = b"y2";
+const P_PAYEE_INDEX: &[u8] = b"i2";
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct HireclawContract {
     pub owner: AccountId,
     pub agent: AccountId,
+    pub agent_pk: String,
     pub token: AccountId,
     pub rules: RulesConfig,
     pub paused: bool,
@@ -45,6 +61,8 @@ pub struct HireclawContract {
     pub workers: LookupMap<AccountId, Worker>,
     pub worker_keys: Vector<AccountId>,
     pub settled: LookupMap<String, bool>,
+    pub claimed: LookupMap<String, bool>,
+    pub legacy_escrow: u128,
     pub ledger: Vector<Entry>,
     pub withdrawable: LookupMap<AccountId, u128>,
     pub pending_out: LookupMap<AccountId, u128>,
@@ -60,30 +78,41 @@ impl near_sdk::state::ContractState for HireclawContract {}
 
 #[near_bindgen]
 impl HireclawContract {
-    #[init]
+    /// Déploiement initial.
+    ///
+    /// `ignore_state` : après un redéploiement, la forme de l'état Borsh change et
+    /// l'ancien état devient illisible. On réinitialise alors proprement — mais
+    /// uniquement en auto-appel (le prédecesseur est le contrat lui-même), donc
+    /// seule la clé du compte contrat peut le faire. Un tiers ne peut pas le prendre.
+    #[init(ignore_state)]
     pub fn new(owner: AccountId, agent: AccountId, token: AccountId, rules: Option<RulesConfig>) -> Self {
-        assert!(!env::state_exists(), "Already initialized");
+        if env::state_exists() && env::predecessor_account_id() != env::current_account_id() {
+            env::panic_str(ERR_NOT_OWNER);
+        }
         let conf = rules.unwrap_or_default();
         conf.validate();
         let paused = conf.kill_switch;
         Self {
             owner,
             agent,
+            agent_pk: String::new(),
             token,
             rules: conf,
             paused,
             balance: 0,
             buckets: Buckets::default(),
-            jobs: LookupMap::new(b"j"),
-            job_keys: Vector::new(b"k"),
-            workers: LookupMap::new(b"w"),
-            worker_keys: Vector::new(b"x"),
-            settled: LookupMap::new(b"s"),
-            ledger: Vector::new(b"l"),
-            withdrawable: LookupMap::new(b"m"),
-            pending_out: LookupMap::new(b"p"),
-            payees: Vector::new(b"y"),
-            payee_index: LookupMap::new(b"i"),
+            jobs: LookupMap::new(P_JOBS),
+            job_keys: Vector::new(P_JOB_KEYS),
+            workers: LookupMap::new(P_WORKERS),
+            worker_keys: Vector::new(P_WORKER_KEYS),
+            settled: LookupMap::new(P_SETTLED),
+            claimed: LookupMap::new(P_CLAIMED),
+            legacy_escrow: 0,
+            ledger: Vector::new(P_LEDGER),
+            withdrawable: LookupMap::new(P_WITHDRAWABLE),
+            pending_out: LookupMap::new(P_PENDING),
+            payees: Vector::new(P_PAYEES),
+            payee_index: LookupMap::new(P_PAYEE_INDEX),
             daily_day: env::block_timestamp() / errors::DAY_NS,
             daily_payroll: 0,
             daily_inference: 0,

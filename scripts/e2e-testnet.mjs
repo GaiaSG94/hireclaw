@@ -18,9 +18,12 @@ const ROOT_DIR = path.resolve(import.meta.dirname, "..");
 const DEPLOYMENT = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "testnet-deployment.json"), "utf8"));
 
 const { contract: CONTRACT, agent: AGENT, client: CLIENT, token: TOKEN } = DEPLOYMENT;
+const OWNER = DEPLOYMENT.owner ?? "defraie.testnet";
 // Le bailleur finance les travailleurs en NEAR (gas). defraie.testnet a servi à créer
 // les comptes ; on bascule sur un autre compte financé quand il s'épuise.
-const PARENT = process.env.HIRECLAW_FUNDER ?? "prereg-placebo-2026.testnet";
+// Bailleur du gas : le compte du contrat lui-même a de la marge libre, et il possède
+// déjà les clés de ses sous-comptes (client, agent, travailleurs).
+const PARENT = process.env.HIRECLAW_FUNDER ?? CONTRACT;
 const provider = new JsonRpcProvider({ url: RPC });
 const GAS = 100n * 10n ** 12n;
 const GAS_TRANSFER_CALL = 300n * 10n ** 12n;
@@ -29,7 +32,7 @@ const NEAR = 10n ** 24n;
 const EXPLORER = "https://testnet.nearblocks.io";
 
 const WORKERS = ["alice", "bob", "chloe"];
-const WORKER_NEAR = 0.5;
+const WORKER_NEAR = 0.12;
 const RUN = Date.now().toString(36);
 const txLog = [];
 
@@ -69,15 +72,24 @@ const nearOf = (amount) => BigInt(Math.round(amount * 1000)) * (NEAR / 1000n);
 
 async function view(accountId, methodName, args = {}) {
   const argsBase64 = Buffer.from(JSON.stringify(args)).toString("base64");
-  const res = await provider.query({
-    request_type: "call_function",
-    finality: "final",
-    account_id: accountId,
-    method_name: methodName,
-    args_base64: argsBase64,
-  });
-  if (res.error) throw new Error(`${methodName}: ${JSON.stringify(res.error).slice(0, 220)}`);
-  return JSON.parse(Buffer.from(res.result).toString());
+  // Le RPC public limite le débit : on patiente et on réessaie.
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      const res = await provider.query({
+        request_type: "call_function",
+        finality: "final",
+        account_id: accountId,
+        method_name: methodName,
+        args_base64: argsBase64,
+      });
+      if (res.error) throw new Error(`${methodName}: ${JSON.stringify(res.error).slice(0, 220)}`);
+      return JSON.parse(Buffer.from(res.result).toString());
+    } catch (err) {
+      if (attempt === 5) throw err;
+      await sleep(1200 * (attempt + 1));
+    }
+  }
+  return null;
 }
 
 /** Lecture tolérante : les répliques RPC peuvent laguer derrière le bloc final. */
@@ -113,6 +125,20 @@ async function call(account, contractId, methodName, args, { deposit = 0n, gas =
   return outcome;
 }
 
+/** Recharge un compte depuis le bailleur : chaque transaction coûte du NEAR au signataire. */
+async function topUp(accountId, target) {
+  const account = await viewAccount(accountId);
+  if (!account) return;
+  const missing = target - BigInt(account.amount);
+  if (missing <= 0n) return;
+  await signer(PARENT).signAndSendTransaction({
+    receiverId: accountId,
+    actions: [actions.transfer(missing)],
+    waitUntil: "FINAL",
+  });
+  console.log(`  gas rechargé pour ${accountId} (+${(Number(missing) / 1e24).toFixed(2)} NEAR)`);
+}
+
 async function ensureWorker(name) {
   const accountId = `${name}.${CONTRACT}`;
   const target = nearOf(WORKER_NEAR);
@@ -144,18 +170,45 @@ async function ensureWorker(name) {
   return accountId;
 }
 
-async function nextJobId() {
-  for (let i = 1; i < 10000; i += 1) {
-    const id = `job-${String(i).padStart(4, "0")}`;
-    let job = null;
-    try {
-      job = await view(CONTRACT, "get_job", { job_id: id });
-    } catch {
-      job = null;
+/** Retrouve la commande qu'on vient de créer, par son spec_hash (robuste après réinit). */
+async function findJobId(specHash, budget) {
+  // Les répliques RPC peuvent laguer : on réessaie quelques secondes.
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    for (let i = 1; i <= 12; i += 1) {
+      const id = `job-${String(i).padStart(4, "0")}`;
+      let job = null;
+      try {
+        job = await view(CONTRACT, "get_job", { job_id: id });
+      } catch {
+        job = null;
+      }
+      if (job && job.spec_hash === specHash && job.budget === budget) return id;
     }
-    if (!job || job.state === "Ordered") return id;
+    await sleep(1500);
   }
-  throw new Error("aucune commande libre trouvée");
+  throw new Error("commande introuvable après le transfert");
+}
+
+/** Payload canonique signé par l'agent : mêmes octets que le contrat Rust et Python. */
+function ticketPayload(ticket) {
+  const keys = ["agent", "amount", "issued_ms", "job_id", "reason", "task_id", "worker"];
+  const ordered = {};
+  for (const key of keys) ordered[key] = key === "amount" ? Number(ticket[key]) : ticket[key];
+  return JSON.stringify(ordered);
+}
+
+function agentKeyPair() {
+  const raw = JSON.parse(fs.readFileSync(path.join(CREDS, `${AGENT}.json`), "utf8"));
+  return KeyPair.fromString(raw.private_key ?? raw.secret_key);
+}
+
+function toHex(bytes) {
+  return Buffer.from(bytes).toString("hex");
+}
+
+function signTicket(keyPair, ticket) {
+  const signature = keyPair.sign(Buffer.from(ticketPayload(ticket), "utf8"));
+  return toHex(signature.signature);
 }
 
 // ------------------------------------------------------------------- scénario
@@ -165,22 +218,28 @@ async function main() {
   console.log(`agent    ${AGENT}`);
   console.log(`client   ${CLIENT}`);
   console.log(`jeton    ${TOKEN}`);
-  console.log(`bailleur ${PARENT} (finance les travailleurs)\n`);
+  console.log(`owner    ${OWNER}`);
+  console.log(`bailleur ${PARENT} (finance le gas)\n`);
 
   const clientSigner = signer(CLIENT);
   const agentSigner = signer(AGENT);
 
-  console.log("1. Le client se minte des USDC de test");
+  console.log("0. Fonds de gas (le client et l'agent paient leurs transactions)");
+  await topUp(CLIENT, nearOf(0.5));
+  await topUp(AGENT, nearOf(0.5));
+
+  console.log("\n1. Le client se minte des USDC de test");
   await call(clientSigner, TOKEN, "mint", { account_id: CLIENT, amount: "5000000" }, { label: "mint 5.00 USDC" });
   console.log(`  solde client : ${usdc(await view(TOKEN, "ft_balance_of", { account_id: CLIENT }))} USDC`);
 
   console.log("\n2. Commande payée d'avance (ft_transfer_call)");
   const deadlineMs = Date.now() + 24 * 3600 * 1000;
-  const msg = JSON.stringify({ action: "order", n_items: 12, deadline_ms: deadlineMs, spec_hash: "sentiment-12-avis" });
-  const jobId = await nextJobId();
+  const specHash = `sentiment-12-avis-${RUN}`;
+  const orderMsg = JSON.stringify({ action: "order", n_items: 12, deadline_ms: deadlineMs, spec_hash: specHash });
   await call(clientSigner, TOKEN, "ft_transfer_call",
-    { receiver_id: CONTRACT, amount: "1200000", memo: `commande ${jobId}`, msg },
+    { receiver_id: CONTRACT, amount: "1200000", memo: `commande ${RUN}`, msg: orderMsg },
     { gas: GAS_TRANSFER_CALL, deposit: ONE_YOCTO, label: "ft_transfer_call 1.20 USDC" });
+  const jobId = await findJobId(specHash, "1200000");
 
   console.log(`\n3. L'agent accepte ${jobId} : marge réservée, budget de paie figé`);
   const goldReveal = "r13:positif,r14:negatif,r15:neutre,r16:positif,r17:negatif";
@@ -221,16 +280,45 @@ async function main() {
     { job_id: jobId, task_id: `t-${RUN}-r`, worker: accounts[1], reason: "minority", gold: false },
     { label: "reject minority" });
 
+  console.log("\n7bis. Le patron se tait : le bon de travail signé paie à sa place");
+  const keyPair = agentKeyPair();
+  const agentPkHex = toHex(keyPair.getPublicKey().data);
+  await call(agentSigner, CONTRACT, "set_agent_key", { agent_pk: agentPkHex },
+    { label: "set_agent_key (clé de signature de l'agent)" });
+
+  const taskId = `t-claim-${RUN}`;
+  const ticket = {
+    job_id: jobId,
+    task_id: taskId,
+    worker: accounts[0],
+    amount: "20000",
+    reason: "validee mais jamais payee",
+    issued_ms: Date.now(),
+    agent: AGENT,
+    signature: "",
+  };
+  ticket.signature = signTicket(keyPair, ticket);
+
+  console.log("  attente du délai payer-ou-refuser (5 s)...");
+  await sleep(7000);
+  await call(signer(accounts[0]), CONTRACT, "claim_unpaid", { ticket },
+    { label: "claim_unpaid (le travailleur réclame son bon)" });
+  const aliceUsdcAfterClaim = await viewStable(TOKEN, "ft_balance_of", { account_id: accounts[0] }, (v) => Number(v) > 0);
+  console.log(`  solde USDC d'${WORKERS[0]} après réclamation : ${usdc(aliceUsdcAfterClaim)}`);
+
   console.log("\n7. Livraison : révélation des contrôles, marge ventilée 60/30/10");
   await call(agentSigner, CONTRACT, "deliver",
     { job_id: jobId, result_hash: `sha256-jeu-${RUN}`, n_validated: 12, gold_reveal: goldReveal },
     { label: "deliver" });
+
 
   console.log("\n8. Le travailleur retire ses gains (ft_transfer sortant)");
   const aliceSigner = signer(accounts[0]);
   await call(aliceSigner, CONTRACT, "withdraw", { amount: null }, { label: "withdraw alice" });
   const aliceUsdc = await viewStable(TOKEN, "ft_balance_of", { account_id: accounts[0] }, (v) => Number(v) > 0);
   console.log(`  solde USDC d'${WORKERS[0]} : ${usdc(aliceUsdc)}`);
+  const worker = await view(CONTRACT, "get_worker", { account: accounts[0] });
+  console.log(`  compteur du travailleur : ${worker.tasks_paid} tâche(s) payée(s), exactitude ${worker.accuracy_pct}%`);
 
   console.log("\n9. Solvabilité et invariants on-chain");
   const solvency = await viewStable(CONTRACT, "get_solvency", {}, (s) => s.balanced === true);

@@ -14,7 +14,7 @@ test:
 	@$(PY) -m pytest -q
 
 build-contract:
-	@cd contract && cargo near build non-reproducible-wasm
+	@cd contract && cargo near build non-reproducible-wasm --no-embed-abi --no-doc
 
 test-contract:
 	@cd contract && cargo test

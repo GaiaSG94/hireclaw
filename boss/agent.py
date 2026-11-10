@@ -9,13 +9,15 @@ from .hashing import sha256_hex
 from .keys import answer_payload, verify
 from .model import FIRED
 from .quality import Decision, QualityEngine, Task
+from .ticket import Ticket, issue
 
 INFERENCE_COST_PER_CHECK = 800  # 0,0008 USDC par contrôle automatique
 
 
 class BossAgent:
     def __init__(self, contract: Contract, items: Iterable, gold_ids: set[str], rng: Any,
-                 inference_provider: str = "inf-check-01") -> None:
+                 inference_provider: str = "inf-check-01", key=None) -> None:
+        self.key = key
         self.contract = contract
         self.items = list(items)
         self.item_ids = [i.id for i in self.items if i.id not in gold_ids]
@@ -91,6 +93,12 @@ class BossAgent:
                                       INFERENCE_COST_PER_CHECK * len(decisions),
                                       job_id=job_id, actor=self.contract.agent)
         return out
+
+    def issue_ticket(self, job_id: str, task_id: str, worker: str, reason: str = "non payée à temps") -> Ticket:
+        """Bon de travail signé : si le patron se tait, le travailleur peut réclamer."""
+        job = self.contract.jobs[job_id]
+        return issue(self.key, job_id, task_id, worker, job.pay_per_task, reason,
+                     self.contract.now_ms())
 
     def first_job(self) -> str:
         return next(iter(self.contract.jobs))

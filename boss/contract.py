@@ -9,6 +9,7 @@ from .errors import PatronError
 from .hashing import sha256_hex
 from .money import fmt, pct_of
 from .model import ACTIVE, FIRED, SENIOR, TRIAL, Buckets, Entry, Job, Worker
+from .ticket import Ticket, check as ticket_ok
 
 DAY_MS = 86_400_000
 REGISTRATION_FEE_NEAR = 1_250_000_000_000_000_000_000  # 0,00125 N par inscription au jeton
@@ -26,6 +27,7 @@ class Contract:
         clock: Callable[[], int] | None = None,
         near_balance: int = REGISTRATION_FEE_NEAR * 40,
         pubkeys: dict[str, str] | None = None,
+        agent_pubkey: str = "",
     ) -> None:
         self.rules = rules.validate()
         self.owner = owner
@@ -43,6 +45,8 @@ class Contract:
         self.ledger: list[Entry] = []
         self.daily = {"day": self._day(), "payroll": 0, "inference": 0}
         self.pubkeys = pubkeys if pubkeys is not None else {}
+        self.agent_pubkey = agent_pubkey
+        self.claimed: set[str] = set()
         self._seq = 0
 
     # ------------------------------------------------------------------ temps
@@ -355,6 +359,52 @@ class Contract:
         self.withdrawable[account] = available - amount
         self.balance -= amount
         self._log("withdraw", account, amount=amount, detail="versement")
+
+    def claim_unpaid(self, ticket: Ticket, *, actor: str | None = None) -> int:
+        """Le travailleur réclame une tâche que le patron n'a pas réglée à temps.
+
+        Trois garde-fous : la signature de l'agent, le délai écoulé, et le fait que
+        la tâche ne soit pas déjà réglée. Le plafond de paie de la commande s'applique
+        quand même : un bon ne peut pas créer d'argent.
+        """
+        actor = actor or ticket.worker
+        if actor != ticket.worker:
+            raise PatronError("ERR_NOT_AGENT", "seul le bénéficiaire réclame son bon")
+        if not self.agent_pubkey or not ticket_ok(ticket, self.agent_pubkey):
+            raise PatronError("ERR_BAD_SIGNATURE", "bon de travail invalide")
+        if ticket.digest in self.claimed:
+            raise PatronError("ERR_ALREADY_SETTLED", "bon déjà réclamé")
+        if self.now_ms() < ticket.issued_ms + self.rules.pay_or_reject_seconds * 1000:
+            raise PatronError("ERR_NOT_DUE", "délai payer-ou-refuser non écoulé")
+        job = self._job(ticket.job_id)
+        key = (job.id, ticket.task_id, ticket.worker)
+        if key in self.settled:
+            raise PatronError("ERR_ALREADY_SETTLED", "tâche déjà réglée par le patron")
+        self._check_bounds(ticket.amount)
+        self._roll_day()
+        worker = self._worker(ticket.worker)
+        if worker.status == FIRED:
+            raise PatronError("ERR_WORKER_FIRED", ticket.worker)
+        if job.payroll_spent + ticket.amount > job.payroll_budget:
+            raise PatronError("ERR_PAYROLL_BUDGET", f"reste {fmt(job.payroll_left)}")
+        if self.daily["payroll"] + ticket.amount > self.rules.payroll_cap_per_day:
+            raise PatronError("ERR_DAILY_CAP", "plafond de paie du jour")
+        if worker.earned_today + ticket.amount > self.rules.worker_cap_per_day:
+            raise PatronError("ERR_WORKER_CAP", ticket.worker)
+        self.settled.add(key)
+        self.claimed.add(ticket.digest)
+        worker.tasks_paid += 1
+        worker.earned_total += ticket.amount
+        worker.earned_today += ticket.amount
+        job.payroll_spent += ticket.amount
+        self.daily["payroll"] += ticket.amount
+        self.credit_withdrawable(ticket.worker, ticket.amount)
+        self._log("claim", actor, job=job.id, amount=ticket.amount,
+                  detail=f"{ticket.task_id} — le silence valait paiement", reason=ticket.reason)
+        return ticket.amount
+
+    def credit_withdrawable(self, account: str, amount: int) -> None:
+        self.withdrawable[account] = self.withdrawable.get(account, 0) + amount
 
     # ------------------------------------------------------------------ pause
     def pause(self, reason: str = "coupe-circuit", *, actor: str | None = None) -> None:

@@ -7,6 +7,7 @@ from typing import Any
 
 from . import dataset
 from .agent import BossAgent
+from .keys import Key
 from .config import Rules
 from .contract import Contract
 from .money import fmt, usdc
@@ -39,6 +40,7 @@ class World:
     clock: Clock
     robots: list[RobotWorker] = field(default_factory=list)
     client: RobotClient | None = None
+    agent_key: Key | None = None
     free_at: dict[str, int] = field(default_factory=dict)
     idle: set[str] = field(default_factory=set)
     steps: int = 0
@@ -50,11 +52,14 @@ class World:
                gold_count: int = 8) -> "World":
         clock = Clock()
         rules = rules or Rules.load(CONFIG)
-        contract = Contract(rules, "owner.testnet", "hireclaw.testnet", clock=clock.now)
+        agent_key = Key()
+        contract = Contract(rules, "owner.testnet", "hireclaw.testnet", clock=clock.now,
+                            agent_pubkey=agent_key.pub_hex)
         all_items = dataset.load()
         job_items = all_items[:n_items]
         golds = all_items[n_items:n_items + gold_count]
-        agent = BossAgent(contract, job_items + golds, {i.id for i in golds}, __import__("random").Random(seed))
+        agent = BossAgent(contract, job_items + golds, {i.id for i in golds},
+                          __import__("random").Random(seed), key=agent_key)
         client = RobotClient("acme.testnet", budget)
         client.fund(contract)
         job_id = client.order(contract, n_items, clock.now() + deadline_s * 1000, "spec-demo")
@@ -62,7 +67,8 @@ class World:
         robots = crew(seed)
         for robot in robots:
             agent.onboard(robot.key)
-        world = cls(rules, contract, agent, job_items + golds, job_id, clock, robots, client)
+        world = cls(rules, contract, agent, job_items + golds, job_id, clock, robots, client,
+                    agent_key=agent_key)
         world.free_at = {r.key.account: clock.now() for r in robots}
         return world
 

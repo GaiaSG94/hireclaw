@@ -4,7 +4,27 @@
   "agent": "agent.hireclaw.defraie.testnet",
   "client": "client.hireclaw.defraie.testnet",
   "token": "usd.panneau.testnet",
-  "deployed_at": "2026-11-10T16:58:53.977Z",
-  "wasm_sha256": "997e21a34eb9f62b109c5871407639331ec47fb5872dd0f95b497af60da533a0",
+  "deployed_at": "2026-11-10T21:39:57.695Z",
+  "owner": "defraie.testnet",
+  "rules": {
+    "task_pay_min": "20000",
+    "task_pay_max": "100000",
+    "payroll_cap_per_day": "20000000",
+    "worker_cap_per_day": "2000000",
+    "min_margin_pct": 15,
+    "redundancy": 3,
+    "gold_share_pct": 20,
+    "min_golds_before_fire": 5,
+    "fire_below_accuracy_pct": 60,
+    "pay_or_reject_seconds": 5,
+    "inference_max_spend_per_day": "500000",
+    "revenue_split": [
+      60,
+      30,
+      10
+    ],
+    "kill_switch": false
+  },
+  "wasm_sha256": "841e19dd4c06cd714217daca285fb30e0ffc70044d28cff581a579461470367f",
   "explorer": "https://testnet.nearblocks.io/address/hireclaw.defraie.testnet"
 }
