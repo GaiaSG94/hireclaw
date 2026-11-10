@@ -1,5 +1,5 @@
 [package]
-name = "boss-integration-tests"
+name = "hireclaw-integration-tests"
 version = "0.1.0"
 edition = "2021"
 publish = false
