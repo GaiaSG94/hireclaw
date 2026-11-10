@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import testnet
+from . import report
 from .keys import Key
 from .money import fmt, usdc
 from .world import World
@@ -146,10 +146,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/work", "/boss", "/ledger"):
+        if parsed.path in ("/", "/work", "/boss", "/ledger", "/demo", "/testnet", "/code"):
             return self._file("index.html", "text/html; charset=utf-8")
-        if parsed.path == "/app.js":
-            return self._file("app.js", "text/javascript; charset=utf-8")
+        if parsed.path in ("/app.js", "/views.js"):
+            return self._file(parsed.path.lstrip("/"), "text/javascript; charset=utf-8")
         if parsed.path == "/style.css":
             return self._file("style.css", "text/css; charset=utf-8")
         if parsed.path == "/api/state":
@@ -159,7 +159,11 @@ class Handler(BaseHTTPRequestHandler):
             card = self.live.task(worker)
             return self._json(card or {"empty": True})
         if parsed.path == "/api/testnet":
-            return self._json(testnet.state())
+            return self._json(report.testnet_report())
+        if parsed.path == "/api/demo":
+            return self._json(report.demo_report())
+        if parsed.path == "/api/code":
+            return self._json(report.code_report())
         if parsed.path == "/api/worker":
             return self._json(self.live.fallback_worker())
         return self._json({"error": "inconnu"}, 404)

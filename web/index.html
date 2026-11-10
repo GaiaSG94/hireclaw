@@ -13,6 +13,9 @@
     <a href="/work" data-view="work">Travailler</a>
     <a href="/boss" data-view="boss">Patron</a>
     <a href="/ledger" data-view="ledger">Registre</a>
+    <a href="/demo" data-view="demo">Démo</a>
+    <a href="/testnet" data-view="testnet">Testnet</a>
+    <a href="/code" data-view="code">Code</a>
   </nav>
 </header>
 
@@ -71,7 +74,57 @@
   </section>
 </main>
 
+  <section id="view-demo" class="view hidden">
+    <h1>La démo, rejouée en direct</h1>
+    <p class="muted">Chaque chargement rejoue le scénario déterministe (graine fixe) :
+      commande payée d'avance, cinq robots, contrôles cachés, majorités, renvois,
+      onze attaques refusées, livraison et invariants.</p>
+    <h2>Commande</h2>
+    <div class="grid" id="demo-head"></div>
+    <h2>Équipe embauchée</h2>
+    <div id="demo-crew"></div>
+    <h2>Travailleurs à la clôture</h2>
+    <div id="demo-workers"></div>
+    <h2>Renvois</h2>
+    <p id="demo-fired" class="muted"></p>
+    <h2>Attaques refusées par le contrat</h2>
+    <div id="demo-attacks"></div>
+    <h2>Livraison, marge et conservation</h2>
+    <div class="grid" id="demo-close"></div>
+  </section>
+
+  <section id="view-testnet" class="view hidden">
+    <h1>Contrat déployé sur NEAR testnet</h1>
+    <p class="muted">Ce qui suit est lu en direct de la chaîne et du fichier de preuves
+      <code>testnet-proof.json</code>. Aucune clé n'est utilisée par cette page.</p>
+    <h2>Déploiement</h2>
+    <div class="grid" id="chain-head"></div>
+    <h2>Règles en vigueur on-chain</h2>
+    <div class="grid" id="chain-rules"></div>
+    <h2>Solvabilité lue sur la chaîne</h2>
+    <div class="grid" id="chain-live"></div>
+    <h2>Transactions de preuve</h2>
+    <div id="chain-tx"></div>
+    <h2>Interface du contrat (ABI)</h2>
+    <div id="chain-abi"></div>
+  </section>
+
+  <section id="view-code" class="view hidden">
+    <h1>Le code</h1>
+    <p class="muted">Inventaire réel du dépôt : fichiers, lignes, limites respectées,
+      tests. Le lien pointe vers le dépôt GitHub public.</p>
+    <h2>Dépôt</h2>
+    <div class="grid" id="code-head"></div>
+    <h2>Tests et règles</h2>
+    <div class="grid" id="code-tests"></div>
+    <h2>Par langage</h2>
+    <div id="code-files"></div>
+    <h2>Fichier par fichier</h2>
+    <div id="code-tree"></div>
+  </section>
+
 <div id="toast" class="toast"></div>
+<script src="/views.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

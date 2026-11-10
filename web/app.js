@@ -19,10 +19,11 @@ function toast(text, bad = false) {
   toast.timer = setTimeout(() => (node.className = "toast"), 2200);
 }
 
+const VIEWS = ["work", "boss", "ledger", "demo", "testnet", "code"];
+
 function currentView() {
-  if (location.pathname.startsWith("/boss")) return "boss";
-  if (location.pathname.startsWith("/ledger")) return "ledger";
-  return "work";
+  const found = VIEWS.find((name) => location.pathname.startsWith("/" + name));
+  return found || "work";
 }
 
 // ------------------------------------------------------------------ identité
@@ -225,14 +226,19 @@ function markNav() {
     section.classList.toggle("hidden", section.id !== "view-" + view));
 }
 
+function handlerFor(view) {
+  const extra = window.HIRECLAW_VIEWS || {};
+  if (view === "work") return { render: workInit, every: 0 };
+  if (view === "boss") return { render: renderBoss, every: 2000 };
+  if (view === "ledger") return { render: () => Promise.all([renderLedger(), renderChain()]), every: 5000 };
+  if (extra[view]) return { render: extra[view], every: view === "testnet" ? 15000 : 0 };
+  return null;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   markNav();
-  const view = currentView();
-  if (view === "work") {
-    await workInit();
-    return;
-  }
-  const render = view === "boss" ? renderBoss : () => Promise.all([renderLedger(), renderChain()]);
-  await render();
-  setInterval(render, 2000);
+  const handler = handlerFor(currentView());
+  if (!handler) return;
+  await handler.render();
+  if (handler.every) setInterval(handler.render, handler.every);
 });
