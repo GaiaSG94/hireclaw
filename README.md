@@ -93,7 +93,7 @@ Fichiers < 500 lignes, fonctions < 50 lignes.
 | `/boss` | Le tableau du patron : avancement, budget de paie, marge, travailleurs, paiements, décisions |
 | `/ledger` | Le registre local **et** un bloc lu en direct du contrat testnet |
 | `/demo` | La démo déterministe rejouée à la demande : commande, équipage, renvois, **11 attaques refusées**, livraison, invariants |
-| `/testnet` | Le contrat réel : adresses, règles on-chain, solvabilité lue sur la chaîne, **9 transactions de preuve**, ABI (24 méthodes), empreinte du WASM |
+| `/testnet` | Le contrat réel : adresses, règles on-chain, solvabilité lue sur la chaîne, **14 transactions de preuve**, ABI (29 méthodes), empreinte du WASM |
 | `/code` | L'inventaire du dépôt : fichiers, lignes, limites respectées, tests, commit, et le README intégral |
 
 URL publique (tunnel Cloudflare, `make public-url` pour l'afficher) :
@@ -117,11 +117,11 @@ Le smart contract de production est écrit en Rust avec `near-sdk` v5 dans `cont
 
 ```sh
 make test-contract   # 11 tests unitaires VMContextBuilder (attaques et règles)
-make build-contract  # build WASM optimisé + ABI (target/near/hireclaw_contract.wasm, 219 KB)
+make build-contract  # build WASM optimisé + ABI (target/near/hireclaw_contract.wasm, 237.9 Ko)
 make test-sandbox   # test d'intégration sur sandbox NEAR réel (cycle complet)
 ```
 
-- **Standards respectés** : NEP-141 receiver (`ft_on_transfer`), sortie cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par le contrat à l'embauche pour les comptes implicites, NEP-297 pour les événements (`EVENT_JSON`), NEP-330 metadata, ABI standard NEAR 0.4.0 (24 méthodes).
+- **Standards respectés** : NEP-141 receiver (`ft_on_transfer`), sortie cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par le contrat à l'embauche pour les comptes implicites, NEP-297 pour les événements (`EVENT_JSON`), NEP-330 metadata, ABI standard NEAR 0.4.0 (29 méthodes).
 - **Règles de code** : 100 % des fichiers < 500 lignes (max 294 l `tests.rs`), 100 % des fonctions < 50 lignes (vérifié par scanner).
 - Documentation détaillée du contrat dans `contract/README.md`.
 
@@ -148,9 +148,10 @@ make public-url       # affiche l'URL publique et l'état des services
 
 ## Limites connues
 
-- Pas de `claim_unpaid` ni de bon de travail signé (V1 du cahier des charges).
-- L'engagement sur les contrôles est vérifié par empreinte dans la démo
-  (`ERR_GOLD_MISMATCH`) ; la publication on-chain est du ressort du testnet.
+- `claim_unpaid` est implémenté et prouvé on-chain, mais sans méta-transaction :
+  le travailleur doit envoyer lui-même la transaction (ou passer par un relais).
+- L'engagement sur les contrôles est vérifié par empreinte (`ERR_GOLD_MISMATCH`)
+  dans la démo et sur testnet.
 - Le statut senior existe dans le contrat et l'agent, mais la démo ne dure pas
   assez longtemps pour l'atteindre.
 - Tâches photo, paie dynamique et encaissement inter-chaînes : non implémentés

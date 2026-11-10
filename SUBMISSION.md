@@ -67,8 +67,8 @@ porter les règles du travail lui-même.
 | Client | `client.hireclaw.defraie.testnet` |
 | Jeton | `usd.panneau.testnet` (NEP-141, 6 décimales) |
 | WASM | 214 Ko |
-| ABI | NEAR 0.4.0, 26 méthodes |
-| sha256 du WASM | `2940332f5d4600f4a924e037b9058aeb1fad310e25e9e1665aa6b2f8eb98772f` |
+| ABI | NEAR 0.4.0, 29 méthodes |
+| sha256 du WASM | `841e19dd4c06cd714217daca285fb30e0ffc70044d28cff581a579461470367f` |
 
 Standards respectés : récepteur NEP-141 (`ft_on_transfer`), sortie d'argent en
 cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par
@@ -181,22 +181,27 @@ règles dans le contrat, et le patron est le premier soumis.
 - Cycle joué : `mint` → `ft_transfer_call` (commande 1,20 USDC) → `accept_job` →
   embauche → `pay_batch` ×3 (0,08 USDC chacun) → `reject` « minority » →
   `deliver` → `withdraw`.
-- La travailleuse alice a réellement reçu 0,16 USDC sur son compte.
-- `get_solvency` renvoie `balanced: true`.
+- La travailleuse alice a réellement reçu ses USDC sur son compte (retrait `ft_transfer`).
+- `get_solvency` renvoie `balanced: true` : 1,20 USDC en garde = 1,20 USDC d'engagements.
 
-Les 9 transactions publiques du cycle (job-0004), avec leur rôle :
+Les 14 transactions publiques du cycle (job-0001), dans l'ordre :
 
-| # | Rôle | Transaction | Lien |
-|---|---|---|---|
-| 1 | `mint` 5,00 USDC (fonds de départ du client) | `HKCa4B8xUN8ovWS25DXdrHoW8VdriV5oJqvGejRdf4fF` | [voir](https://testnet.nearblocks.io/txns/HKCa4B8xUN8ovWS25DXdrHoW8VdriV5oJqvGejRdf4fF) |
-| 2 | `ft_transfer_call` 1,20 USDC (la commande du client) | `8VdimhwjabYrMFgft8tBCChX1jywo7fVkQMRjhubSrZY` | [voir](https://testnet.nearblocks.io/txns/8VdimhwjabYrMFgft8tBCChX1jywo7fVkQMRjhubSrZY) |
-| 3 | `accept_job` à 0,02 USDC/tâche (marge réservée, budget de paie fixé) | `68sHbGX2R8LJn7MEBBtuSAZvY5fjqheLcHVRPtAG5n19` | [voir](https://testnet.nearblocks.io/txns/68sHbGX2R8LJn7MEBBtuSAZvY5fjqheLcHVRPtAG5n19) |
-| 4 | `pay_batch` alice (4 tâches = 0,08 USDC) | `9mq5jpCqEPd9hmHvVbmuaT4u8gGfvtJr49tZFK7nRCMY` | [voir](https://testnet.nearblocks.io/txns/9mq5jpCqEPd9hmHvVbmuaT4u8gGfvtJr49tZFK7nRCMY) |
-| 5 | `pay_batch` bob (4 tâches = 0,08 USDC) | `EX1jsVmyxckKwtfyAB9oc4PtarbXzRBCvFZ9LhQUxNyB` | [voir](https://testnet.nearblocks.io/txns/EX1jsVmyxckKwtfyAB9oc4PtarbXzRBCvFZ9LhQUxNyB) |
-| 6 | `pay_batch` chloe (4 tâches = 0,08 USDC) | `AveXpC48DcjnYxADfMvA3CmLh9cDYNVW6VgzpccLXuV3` | [voir](https://testnet.nearblocks.io/txns/AveXpC48DcjnYxADfMvA3CmLh9cDYNVW6VgzpccLXuV3) |
-| 7 | `reject` « minority » (réponse minoritaire écartée, motif public) | `595xwcKzAeMSVE72SPJBMrgZ8LxccW77z7Qa7cZ4VosJ` | [voir](https://testnet.nearblocks.io/txns/595xwcKzAeMSVE72SPJBMrgZ8LxccW77z7Qa7cZ4VosJ) |
-| 8 | `deliver` (livraison du résultat, marge ventilée) | `GWGtsLhmcsBLEzXMP9weuHyasPtpRcNNmKzyWoVLQisg` | [voir](https://testnet.nearblocks.io/txns/GWGtsLhmcsBLEzXMP9weuHyasPtpRcNNmKzyWoVLQisg) |
-| 9 | `withdraw` alice (la travailleuse encaisse) | `Bxdf9uwcxu2BmzaUkGGz3CdUJ86SSi72bzMCXxWR69bQ` | [voir](https://testnet.nearblocks.io/txns/Bxdf9uwcxu2BmzaUkGGz3CdUJ86SSi72bzMCXxWR69bQ) |
+| # | Étape | Transaction |
+|---|---|---|
+| 1 | `mint 5.00 USDC` — le client se minte des USDC de test (jeton NEP-141) | [`3njZ8TizuLWG…`](https://testnet.nearblocks.io/txns/3njZ8TizuLWGVwRyYRssbwJtKqgaa7d9omw7pm6CaBSu) |
+| 2 | `ft_transfer_call 1.20 USDC` — la commande payée d'avance, budget bloqué par le contrat | [`61E1VSzpp1R7…`](https://testnet.nearblocks.io/txns/61E1VSzpp1R7qJDbvKKsEw6qMFCTxWCdKX4uxF5b7UwC) |
+| 3 | `accept_job 0.02 USDC/tâche` — marge réservée 0,18 et budget de paie 1,02 figés | [`A7GSj3TjCdHJ…`](https://testnet.nearblocks.io/txns/A7GSj3TjCdHJJBSs2x9EvgMRLBDB9GbmHTDqDFdCnTyk) |
+| 4 | `hire alice` — embauche : le contrat paie l'inscription au jeton | [`EpuoLSes6Wyz…`](https://testnet.nearblocks.io/txns/EpuoLSes6WyzRDzRuoEvRBembYSECC3UUNRMUqWrHNfk) |
+| 5 | `hire bob` — embauche (2e travailleur) | [`HXJYw8h4mVn3…`](https://testnet.nearblocks.io/txns/HXJYw8h4mVn3BzrfQLG3D9uet8N9QwgEsbcy9VbtrcSH) |
+| 6 | `hire chloe` — embauche (3e travailleur) | [`woZbg8NMwuhA…`](https://testnet.nearblocks.io/txns/woZbg8NMwuhAfMjC7GCdJQxRUsKKg5GbEHanXKeoqHi) |
+| 7 | `pay_batch alice (4 tâches = 0.08 USDC)` — paie par lot de 4 tâches validées | [`2tnSvgDbc8FK…`](https://testnet.nearblocks.io/txns/2tnSvgDbc8FKjop1kpYtje98qhFU4QGW4evdjzPPE9AM) |
+| 8 | `pay_batch bob (4 tâches = 0.08 USDC)` — paie par lot (2e travailleur) | [`DXdog27ZLJSg…`](https://testnet.nearblocks.io/txns/DXdog27ZLJSgSCiyaXNt1NGEpUQiZtphL3Wv8H5Q6Lzd) |
+| 9 | `pay_batch chloe (4 tâches = 0.08 USDC)` — paie par lot (3e travailleur) | [`4a57r1DJmcrg…`](https://testnet.nearblocks.io/txns/4a57r1DJmcrg2itCRyocpAjDTrf2dK7P3hjBoqXKgXeG) |
+| 10 | `reject minority` — refus motivé et public (réponse minoritaire) | [`9Z9YdcJZe541…`](https://testnet.nearblocks.io/txns/9Z9YdcJZe541U3eVAs4vp7pyLVRdTCsxMjBJeYCpNA93) |
+| 11 | `set_agent_key (clé de signature de l'agent)` — l'agent publie sa clé de signature de bons | [`9UAEACZGqfUx…`](https://testnet.nearblocks.io/txns/9UAEACZGqfUxA6dpJ55ioMdxUSLZTUDNGcAJJ1pLunwM) |
+| 12 | `claim_unpaid (le travailleur réclame son bon)` — C-F14 : le silence vaut paiement, bon signé honoré | [`Hmij56VviMDm…`](https://testnet.nearblocks.io/txns/Hmij56VviMDmcBbiCdCFSgCAoGUjpbyRwTDhPEpSGqrm) |
+| 13 | `deliver` — livraison, marge ventilée 60/30/10 | [`6xcspUs9KEkK…`](https://testnet.nearblocks.io/txns/6xcspUs9KEkKutETQR9PtSWRiYJRbjs58FgRxNpRzGVj) |
+| 14 | `withdraw alice` — la travailleuse encaisse en USDC réels | [`aMgRgkYhAzBB…`](https://testnet.nearblocks.io/txns/aMgRgkYhAzBB1XKGd2nDGdDx2krjgVS6RGJ65hPteoK) |
 
 Le fichier `testnet-proof.json` du dépôt contient ces hachages et l'état de
 solvabilité, sans aucun secret.

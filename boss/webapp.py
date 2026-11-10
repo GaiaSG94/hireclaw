@@ -146,7 +146,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/work", "/boss", "/ledger", "/demo", "/testnet", "/code"):
+        if parsed.path == "/media/demo.mp4":
+            return self._file("../media/demo.mp4", "video/mp4")
+        if parsed.path in ("/", "/work", "/boss", "/ledger", "/demo", "/testnet", "/code", "/video"):
             return self._file("index.html", "text/html; charset=utf-8")
         if parsed.path in ("/app.js", "/views.js"):
             return self._file(parsed.path.lstrip("/"), "text/javascript; charset=utf-8")
@@ -185,7 +187,9 @@ class Handler(BaseHTTPRequestHandler):
 
     # -------------------------------------------------------------------- outils
     def _file(self, name: str, ctype: str) -> None:
-        path = WEB / name
+        path = (WEB / name).resolve()
+        if not str(path).startswith(str(WEB.parent.resolve())):
+            return self._json({"error": "chemin refusé"}, 400)
         if not path.exists():
             return self._json({"error": "fichier absent"}, 404)
         payload = path.read_bytes()

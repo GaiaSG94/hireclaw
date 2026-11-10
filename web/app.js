@@ -19,7 +19,7 @@ function toast(text, bad = false) {
   toast.timer = setTimeout(() => (node.className = "toast"), 2200);
 }
 
-const VIEWS = ["work", "boss", "ledger", "demo", "testnet", "code"];
+const VIEWS = ["work", "boss", "ledger", "demo", "testnet", "code", "video"];
 
 function currentView() {
   const found = VIEWS.find((name) => location.pathname.startsWith("/" + name));

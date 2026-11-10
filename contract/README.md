@@ -1,6 +1,6 @@
 # HireclawContract — contrat NEAR de Hireclaw (agent-patron)
 
-Smart contract écrit avec `near-sdk` v5, compilé en wasm32 (`target/near/hireclaw_contract.wasm`, 219 KB) avec ABI standard v0.4.0.
+Smart contract écrit avec `near-sdk` v5, compilé en wasm32 (`target/near/hireclaw_contract.wasm`, 237.9 Ko) avec ABI standard v0.4.0.
 
 Applique **strictement** le code du travail défini par le propriétaire :
 salaires plancher/plafond, marge réservée intouchable, plafonds journaliers
