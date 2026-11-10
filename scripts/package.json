@@ -1,0 +1,8 @@
+{
+  "name": "hireclaw-scripts",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "near-api-js": "^5.0.1"
+  }
+}

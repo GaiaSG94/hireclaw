@@ -1,0 +1,10 @@
+{
+  "network": "testnet",
+  "contract": "hireclaw.defraie.testnet",
+  "agent": "agent.hireclaw.defraie.testnet",
+  "client": "client.hireclaw.defraie.testnet",
+  "token": "usd.panneau.testnet",
+  "deployed_at": "2026-11-10T16:58:53.977Z",
+  "wasm_sha256": "997e21a34eb9f62b109c5871407639331ec47fb5872dd0f95b497af60da533a0",
+  "explorer": "https://testnet.nearblocks.io/address/hireclaw.defraie.testnet"
+}

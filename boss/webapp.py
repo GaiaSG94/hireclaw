@@ -10,6 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from . import testnet
 from .keys import Key
 from .money import fmt, usdc
 from .world import World
@@ -157,6 +158,8 @@ class Handler(BaseHTTPRequestHandler):
             worker = (parse_qs(parsed.query).get("worker") or [""])[0]
             card = self.live.task(worker)
             return self._json(card or {"empty": True})
+        if parsed.path == "/api/testnet":
+            return self._json(testnet.state())
         if parsed.path == "/api/worker":
             return self._json(self.live.fallback_worker())
         return self._json({"error": "inconnu"}, 404)

@@ -187,6 +187,35 @@ async function renderLedger() {
       <td>${esc(e.detail || e.reason)}</td></tr>`).join("");
 }
 
+// ------------------------------------------------------------------ on-chain
+async function renderChain() {
+  const data = await api("/api/testnet");
+  if (!data.available) {
+    $("chain-note").textContent = "Contrat testnet non déployé : " + (data.reason || "");
+    return;
+  }
+  const sol = data.solvency || {};
+  $("chain-note").innerHTML =
+    `Contrat <a class="mono" href="${esc(data.explorer)}" target="_blank" rel="noopener">${esc(data.contract)}</a> ` +
+    `· jeton ${esc(data.token)} · déployé le ${esc((data.deployed_at || "").slice(0, 10))}`;
+  $("chain").innerHTML = cells([
+    ["solde USDC", usdc(Number(sol.balance || 0))],
+    ["somme des engagements", usdc(Number(sol.sum || 0))],
+    ["invariant C-I1", sol.balanced ? "équilibré" : "VIOLÉ"],
+    ["paie bloquée", usdc(Number(sol.payroll_held || 0))],
+    ["marges réservées", usdc(Number(sol.margins_held || 0))],
+    ["propriétaire", usdc(Number((sol.buckets || {}).owner || 0))],
+    ["réserve", usdc(Number((sol.buckets || {}).reserve || 0))],
+    ["contributeurs", usdc(Number((sol.buckets || {}).contributors || 0))],
+  ]);
+  const rows = Array.isArray(data.ledger) ? data.ledger.slice(-12).reverse() : [];
+  $("chain-ledger").innerHTML =
+    "<tr><th>#</th><th>Type</th><th>Montant</th><th>Détail</th></tr>" +
+    rows.map((e) => `<tr><td class="mono">${e.seq}</td><td>${esc(e.kind)}</td>
+      <td class="num">${Number(e.amount) ? usdc(Number(e.amount)) : "—"}</td>
+      <td>${esc(e.detail || e.reason)}</td></tr>`).join("");
+}
+
 // ----------------------------------------------------------------------- init
 function markNav() {
   const view = currentView();
@@ -203,7 +232,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await workInit();
     return;
   }
-  const render = view === "boss" ? renderBoss : renderLedger;
+  const render = view === "boss" ? renderBoss : () => Promise.all([renderLedger(), renderChain()]);
   await render();
   setInterval(render, 2000);
 });

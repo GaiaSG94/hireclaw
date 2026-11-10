@@ -1,0 +1,102 @@
+{
+  "network": "testnet",
+  "contract": "hireclaw.defraie.testnet",
+  "agent": "agent.hireclaw.defraie.testnet",
+  "client": "client.hireclaw.defraie.testnet",
+  "token": "usd.panneau.testnet",
+  "deployed_at": "2026-11-10T16:58:53.977Z",
+  "wasm_sha256": "997e21a34eb9f62b109c5871407639331ec47fb5872dd0f95b497af60da533a0",
+  "explorer": "https://testnet.nearblocks.io/address/hireclaw.defraie.testnet",
+  "e2e_completed_at": "2026-11-10T17:12:40.732Z",
+  "job_id": "job-0004",
+  "transactions": [
+    {
+      "step": "mint 5.00 USDC",
+      "ok": true,
+      "tx": "HKCa4B8xUN8ovWS25DXdrHoW8VdriV5oJqvGejRdf4fF",
+      "url": "https://testnet.nearblocks.io/txns/HKCa4B8xUN8ovWS25DXdrHoW8VdriV5oJqvGejRdf4fF"
+    },
+    {
+      "step": "ft_transfer_call 1.20 USDC",
+      "ok": true,
+      "tx": "8VdimhwjabYrMFgft8tBCChX1jywo7fVkQMRjhubSrZY",
+      "url": "https://testnet.nearblocks.io/txns/8VdimhwjabYrMFgft8tBCChX1jywo7fVkQMRjhubSrZY"
+    },
+    {
+      "step": "accept_job 0.02 USDC/tâche",
+      "ok": true,
+      "tx": "68sHbGX2R8LJn7MEBBtuSAZvY5fjqheLcHVRPtAG5n19",
+      "url": "https://testnet.nearblocks.io/txns/68sHbGX2R8LJn7MEBBtuSAZvY5fjqheLcHVRPtAG5n19"
+    },
+    {
+      "step": "pay_batch alice (4 tâches = 0.08 USDC)",
+      "ok": true,
+      "tx": "9mq5jpCqEPd9hmHvVbmuaT4u8gGfvtJr49tZFK7nRCMY",
+      "url": "https://testnet.nearblocks.io/txns/9mq5jpCqEPd9hmHvVbmuaT4u8gGfvtJr49tZFK7nRCMY"
+    },
+    {
+      "step": "pay_batch bob (4 tâches = 0.08 USDC)",
+      "ok": true,
+      "tx": "EX1jsVmyxckKwtfyAB9oc4PtarbXzRBCvFZ9LhQUxNyB",
+      "url": "https://testnet.nearblocks.io/txns/EX1jsVmyxckKwtfyAB9oc4PtarbXzRBCvFZ9LhQUxNyB"
+    },
+    {
+      "step": "pay_batch chloe (4 tâches = 0.08 USDC)",
+      "ok": true,
+      "tx": "AveXpC48DcjnYxADfMvA3CmLh9cDYNVW6VgzpccLXuV3",
+      "url": "https://testnet.nearblocks.io/txns/AveXpC48DcjnYxADfMvA3CmLh9cDYNVW6VgzpccLXuV3"
+    },
+    {
+      "step": "reject minority",
+      "ok": true,
+      "tx": "595xwcKzAeMSVE72SPJBMrgZ8LxccW77z7Qa7cZ4VosJ",
+      "url": "https://testnet.nearblocks.io/txns/595xwcKzAeMSVE72SPJBMrgZ8LxccW77z7Qa7cZ4VosJ"
+    },
+    {
+      "step": "deliver",
+      "ok": true,
+      "tx": "GWGtsLhmcsBLEzXMP9weuHyasPtpRcNNmKzyWoVLQisg",
+      "url": "https://testnet.nearblocks.io/txns/GWGtsLhmcsBLEzXMP9weuHyasPtpRcNNmKzyWoVLQisg"
+    },
+    {
+      "step": "withdraw alice",
+      "ok": true,
+      "tx": "Bxdf9uwcxu2BmzaUkGGz3CdUJ86SSi72bzMCXxWR69bQ",
+      "url": "https://testnet.nearblocks.io/txns/Bxdf9uwcxu2BmzaUkGGz3CdUJ86SSi72bzMCXxWR69bQ"
+    }
+  ],
+  "solvency": {
+    "balance": "4640000",
+    "payroll_held": "2040000",
+    "margins_held": "360000",
+    "buckets": {
+      "owner": "1152000",
+      "reserve": "576000",
+      "contributors": "192000"
+    },
+    "withdrawable_total": "320000",
+    "pending_out_total": "0",
+    "sum": "4640000",
+    "balanced": true
+  },
+  "job": {
+    "id": "job-0004",
+    "client": "client.hireclaw.defraie.testnet",
+    "budget": "1200000",
+    "n_items": 12,
+    "deadline_ms": 1794417122340,
+    "spec_hash": "sentiment-12-avis",
+    "created_ms": 1794330725058,
+    "state": "Delivered",
+    "pay_per_task": "20000",
+    "margin_reserved": "0",
+    "payroll_budget": "240000",
+    "payroll_spent": "240000",
+    "gold_commit": "b0c65de4061aade3f8f7d933c807fa2c9ad34c0b8f333f420e29b65b087d8852",
+    "gold_reveal": "r13:positif,r14:negatif,r15:neutre,r16:positif,r17:negatif",
+    "result_hash": "sha256-jeu-mway6kio",
+    "n_validated": 12,
+    "delivered_ms": 1794330755273,
+    "inference_spent": "0"
+  }
+}
