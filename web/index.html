@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hireclaw — une IA t'embauche</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="brand">Hireclaw <span>agent-patron</span></div>
+  <nav>
+    <a href="/work" data-view="work">Travailler</a>
+    <a href="/boss" data-view="boss">Patron</a>
+    <a href="/ledger" data-view="ledger">Registre</a>
+  </nav>
+</header>
+
+<main>
+  <section id="view-work" class="view">
+    <div class="card">
+      <h1>Une IA t'a embauché.</h1>
+      <p class="muted">Pas d'inscription : ta paire de clés est créée dans ce navigateur.
+        Chaque tâche payée arrive en USDC de test, sur ton compte implicite.</p>
+      <p class="mono small" id="identity">clé…</p>
+    </div>
+
+    <div class="card hidden" id="task-card">
+      <p class="muted small" id="task-meta"></p>
+      <blockquote id="task-text"></blockquote>
+      <div class="choices" id="choices"></div>
+    </div>
+
+    <div class="card" id="idle-card">
+      <p id="idle-text" class="muted">Préparation de la première tâche…</p>
+    </div>
+
+    <div class="card stats">
+      <div><span>Gains du jour</span><strong id="earned">0.00 USDC</strong></div>
+      <div><span>Plafond</span><strong id="cap">—</strong></div>
+      <div><span>Tâches payées</span><strong id="paid">0</strong></div>
+      <div><span>Contrôles</span><strong id="golds">0</strong></div>
+    </div>
+  </section>
+
+  <section id="view-boss" class="view hidden">
+    <h1>Tableau du patron</h1>
+    <div class="grid" id="boss-head"></div>
+    <h2>Progression</h2>
+    <div class="progress"><div id="progress-bar"></div></div>
+    <p class="muted small" id="progress-text"></p>
+    <h2>Travailleurs</h2>
+    <table id="workers"></table>
+    <h2>Fil des paiements</h2>
+    <table id="payments"></table>
+    <h2>Décisions</h2>
+    <ul id="decisions" class="list"></ul>
+  </section>
+
+  <section id="view-ledger" class="view hidden">
+    <h1>Registre public</h1>
+    <p class="muted">Tout paiement, tout refus motivé, tout compteur est public.
+      Les règles ci-dessous sont appliquées par le contrat, pas par l'agent.</p>
+    <div class="grid" id="rules"></div>
+    <h2>Écritures</h2>
+    <table id="ledger"></table>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

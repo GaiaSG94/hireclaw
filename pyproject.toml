@@ -1,0 +1,22 @@
+[project]
+name = "hireclaw"
+version = "0.1.0"
+description = "Hireclaw — an AI agent that hires humans, checks work, pays in USDC in seconds, with labor law enforced by a NEAR contract"
+requires-python = ">=3.10"
+dependencies = ["cryptography>=41", "PyYAML>=6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+hireclaw = "boss.cli:main"
+boss = "boss.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["boss"]
+
+[tool.setuptools.package-data]
+boss = ["../data/*.json"]

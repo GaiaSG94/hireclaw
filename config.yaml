@@ -1,0 +1,15 @@
+# Le code du travail du patron. Tout ce qui suit est appliqué par le contrat.
+task_pay_usdc:
+  min: 0.02
+  max: 0.10
+payroll_cap_usdc_per_day: 20
+worker_cap_usdc_per_day: 2
+min_margin_pct: 15
+redundancy: 3
+gold_share_pct: 20
+min_golds_before_fire: 5
+fire_below_accuracy_pct: 60
+pay_or_reject_seconds: 120
+inference_max_spend_usdc_per_day: 0.50
+revenue_split: [60, 30, 10]
+kill_switch: false

@@ -1,0 +1,140 @@
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --line: #263041;
+  --text: #e6edf3;
+  --muted: #8b98a9;
+  --accent: #7ee787;
+  --warn: #ffb86b;
+  --bad: #ff7b72;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.55 -apple-system, "Segoe UI", Inter, system-ui, sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: rgba(13, 17, 23, 0.92);
+  backdrop-filter: blur(6px);
+}
+
+.brand { font-weight: 700; letter-spacing: 0.2px; }
+.brand span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
+
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  margin-left: 18px;
+  font-size: 14px;
+  padding-bottom: 3px;
+  border-bottom: 2px solid transparent;
+}
+
+nav a.active { color: var(--text); border-color: var(--accent); }
+
+main { max-width: 880px; margin: 0 auto; padding: 28px 20px 80px; }
+.view.hidden, .hidden { display: none; }
+
+h1 { font-size: 22px; margin: 0 0 10px; }
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+     margin: 28px 0 10px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+blockquote {
+  margin: 14px 0 18px;
+  font-size: 19px;
+  line-height: 1.5;
+  border-left: 3px solid var(--accent);
+  padding-left: 14px;
+}
+
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: #1f2633;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: transform 0.06s ease, border-color 0.15s ease;
+}
+
+button:hover { border-color: var(--accent); }
+button:active { transform: translateY(1px); }
+button:disabled { opacity: 0.5; cursor: default; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.stats span { display: block; color: var(--muted); font-size: 12px; }
+.stats strong { font-size: 17px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.grid .cell { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.grid .cell span { color: var(--muted); font-size: 12px; display: block; }
+.grid .cell strong { font-size: 16px; }
+
+.progress { height: 10px; background: #1f2633; border-radius: 999px; overflow: hidden; }
+.progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), #58a6ff); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+td.num { text-align: right; font-family: ui-monospace, monospace; }
+
+.list { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+.list li { margin-bottom: 6px; }
+
+.tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px;
+       border: 1px solid var(--line); }
+.tag.Trial { color: var(--warn); }
+.tag.Active, .tag.Senior { color: var(--accent); }
+.tag.Fired { color: var(--bad); }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translate(-50%, 20px);
+  background: #12351f;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 12px 20px;
+  border-radius: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-weight: 600;
+}
+
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.bad { background: #3a1616; border-color: var(--bad); color: var(--bad); }
+
+@media (max-width: 560px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  nav a { margin-left: 12px; }
+}

@@ -1,0 +1,9 @@
+target/
+contract/target/
+contract/integration-tests/target/
+__pycache__/
+*.pyc
+.venv/
+runs/
+.pytest_cache/
+*.egg-info/

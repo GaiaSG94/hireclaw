@@ -1,0 +1,28 @@
+{
+  "items": [
+    {"id": "r01", "gold": "positif", "text": "Le casque tient toute la journée, le son est net et l'autonomie dépasse largement la promesse."},
+    {"id": "r02", "gold": "négatif", "text": "Livré avec une charnière cassée, le support ne tient pas et le service client ne répond pas."},
+    {"id": "r03", "gold": "neutre", "text": "Reçu hier, conforme à la description. Je ne l'ai pas encore utilisé assez pour me prononcer."},
+    {"id": "r04", "gold": "positif", "text": "Trois semaines d'usage intensif, aucune rayure, la batterie tient encore deux jours."},
+    {"id": "r05", "gold": "négatif", "text": "Le câble a lâché au bout d'une semaine et la garantie ne couvre pas ce modèle."},
+    {"id": "r06", "gold": "neutre", "text": "Emballage correct, notice en trois langues. Le produit fait ce qu'il annonce, sans plus."},
+    {"id": "r07", "gold": "positif", "text": "Installation en dix minutes, tout fonctionne du premier coup, je recommande."},
+    {"id": "r08", "gold": "négatif", "text": "Bruits de plastique dès qu'on appuie, et l'écran affiche des lignes au bout de deux jours."},
+    {"id": "r09", "gold": "neutre", "text": "Prix correct pour la catégorie. Rien d'exceptionnel, rien de rédhibitoire."},
+    {"id": "r10", "gold": "positif", "text": "Le meilleur achat de l'année : léger, solide, et la prise en main est immédiate."},
+    {"id": "r11", "gold": "négatif", "text": "Deux retours de suite avec le même défaut d'étanchéité, je demande un remboursement."},
+    {"id": "r12", "gold": "neutre", "text": "Reçu dans les délais. La couleur est un peu plus terne que sur les photos."},
+    {"id": "r13", "gold": "positif", "text": "Le service après-vente a remplacé la pièce en 48 heures, très professionnel."},
+    {"id": "r14", "gold": "négatif", "text": "Trop bruyant pour un usage en appartement, et la télécommande répond une fois sur trois."},
+    {"id": "r15", "gold": "neutre", "text": "Correspond au modèle précédent. Les réglages sont les mêmes, sans surprise."},
+    {"id": "r16", "gold": "positif", "text": "Excellente finition, les matériaux inspirent confiance et la connexion est stable."},
+    {"id": "r17", "gold": "négatif", "text": "La batterie gonfle après un mois, je ne le laisse plus branché la nuit."},
+    {"id": "r18", "gold": "neutre", "text": "Fait le travail pour un usage occasionnel, je ne le conseillerais pas pour du quotidien."},
+    {"id": "r19", "gold": "positif", "text": "Livraison rapide, produit impeccable, et le mode silencieux est vraiment silencieux."},
+    {"id": "r20", "gold": "négatif", "text": "L'application plante à chaque mise à jour et le support renvoie vers une FAQ inutile."},
+    {"id": "r21", "gold": "neutre", "text": "Acheté en promotion, à ce prix c'est honnête. Au prix plein, je réfléchirais."},
+    {"id": "r22", "gold": "positif", "text": "Six mois sans un seul problème, je rachèterais sans hésiter."},
+    {"id": "r23", "gold": "négatif", "text": "Les boutons sont devenus insensibles après trois semaines, retour immédiat."},
+    {"id": "r24", "gold": "neutre", "text": "Le rendu sonore est moyen, l'autonomie est moyenne, le prix est moyen."}
+  ]
+}
