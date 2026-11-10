@@ -2,8 +2,8 @@ use near_sdk::json_types::U128;
 use near_sdk::{env, ext_contract, near_bindgen, AccountId, Gas, NearToken, Promise};
 
 use crate::errors::*;
-use crate::BossContract;
-use crate::BossContractExt;
+use crate::HireclawContract;
+use crate::HireclawContractExt;
 
 pub const TGAS_FT_TRANSFER: u64 = 25;
 pub const TGAS_CALLBACK: u64 = 15;
@@ -18,7 +18,7 @@ pub trait FungibleToken {
 }
 
 #[near_bindgen]
-impl BossContract {
+impl HireclawContract {
     /// Sortie d'argent réelle : le contrat appelle le jeton USDC, puis règle ses comptes
     /// dans le callback. Un échec du transfert rend l'argent au compte (jamais perdu).
     pub(crate) fn pay_out(&mut self, account: AccountId, amount: u128) -> Promise {

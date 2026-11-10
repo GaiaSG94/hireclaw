@@ -32,7 +32,7 @@ pub struct BatchItem {
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct BossContract {
+pub struct HireclawContract {
     pub owner: AccountId,
     pub agent: AccountId,
     pub token: AccountId,
@@ -56,10 +56,10 @@ pub struct BossContract {
     pub seq: u64,
 }
 
-impl near_sdk::state::ContractState for BossContract {}
+impl near_sdk::state::ContractState for HireclawContract {}
 
 #[near_bindgen]
-impl BossContract {
+impl HireclawContract {
     #[init]
     pub fn new(owner: AccountId, agent: AccountId, token: AccountId, rules: Option<RulesConfig>) -> Self {
         assert!(!env::state_exists(), "Already initialized");

@@ -2,7 +2,7 @@
 mod tests {
     use crate::errors::*;
     use crate::BatchItem;
-    use crate::BossContract;
+    use crate::HireclawContract;
     use near_sdk::json_types::U128;
     use near_sdk::test_utils::VMContextBuilder;
     use near_sdk::{env, testing_env, AccountId};
@@ -17,17 +17,17 @@ mod tests {
         )
     }
 
-    fn new_contract() -> BossContract {
+    fn new_contract() -> HireclawContract {
         let (owner, agent, token, _, _) = accounts();
         let mut builder = VMContextBuilder::new();
         builder.current_account_id(agent.clone());
         builder.predecessor_account_id(owner.clone());
         builder.block_timestamp(1_700_000_000_000_000_000); // ns
         testing_env!(builder.build());
-        BossContract::new(owner, agent, token, None)
+        HireclawContract::new(owner, agent, token, None)
     }
 
-    fn order_default_job(c: &mut BossContract) -> String {
+    fn order_default_job(c: &mut HireclawContract) -> String {
         let (_, _, token, client, _) = accounts();
         let mut builder = VMContextBuilder::new();
         builder.predecessor_account_id(token);
@@ -60,7 +60,7 @@ mod tests {
         assert_eq!(job.margin_reserved.0, 180_000); // 15% of 1.2M
         assert_eq!(job.payroll_budget.0, 1_020_000);
 
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         let w = c.get_worker(w1).unwrap();
         assert_eq!(w.status, WorkerStatus::Trial);
     }
@@ -75,7 +75,7 @@ mod tests {
         builder.predecessor_account_id(agent);
         testing_env!(builder.build());
         c.accept_job(jid.clone(), U128(20_000), "dummy".into());
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         c.pay_batch(
             jid,
             vec![BatchItem {
@@ -97,7 +97,7 @@ mod tests {
         builder.predecessor_account_id(agent);
         testing_env!(builder.build());
         c.accept_job(jid.clone(), U128(20_000), "dummy".into());
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         let item = BatchItem {
             task_id: "t1".into(),
             worker: w1.clone(),
@@ -124,7 +124,7 @@ mod tests {
         let mut builder = VMContextBuilder::new();
         builder.predecessor_account_id(agent);
         testing_env!(builder.build());
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         c.fire(w1); // 0 golds -> cannot fire
     }
 
@@ -137,7 +137,7 @@ mod tests {
         builder.predecessor_account_id(agent);
         testing_env!(builder.build());
         c.accept_job(jid.clone(), U128(20_000), "dummy".into());
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         for i in 0..5 {
             c.reject(jid.clone(), format!("gold-{}", i), w1.clone(), "gold_wrong".into(), true);
         }
@@ -159,7 +159,7 @@ mod tests {
         builder.predecessor_account_id(agent);
         testing_env!(builder.build());
         c.accept_job(jid.clone(), U128(20_000), "dummy".into());
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         c.pay_batch(
             jid,
             vec![BatchItem {
@@ -181,7 +181,7 @@ mod tests {
         builder.predecessor_account_id(agent);
         testing_env!(builder.build());
         c.accept_job(jid.clone(), U128(20_000), "dummy".into());
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         for i in 0..5 {
             c.reject(jid.clone(), format!("gold-{}", i), w1.clone(), "gold_wrong".into(), true);
         }
@@ -229,7 +229,7 @@ mod tests {
         builder.predecessor_account_id(agent);
         testing_env!(builder.build());
         c.accept_job(jid.clone(), U128(100_000), "dummy".into()); // 100k per task
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
         // 11 tasks * 100k = 1.1M > 1.02M budget
         let items: Vec<BatchItem> = (0..10)
             .map(|i| BatchItem {
@@ -261,7 +261,7 @@ mod tests {
         c.pause(Some("kill switch test".into()));
 
         // trying to hire while paused
-        c.hire(w1);
+        let _ = c.hire(w1);
     }
 
     #[test]
@@ -275,7 +275,7 @@ mod tests {
         let reveal = "test_gold_answers";
         let commit_hash = hex::encode(env::sha256(reveal.as_bytes()));
         c.accept_job(jid.clone(), U128(20_000), commit_hash);
-        c.hire(w1.clone());
+        let _ = c.hire(w1.clone());
 
         c.pay_batch(
             jid.clone(),

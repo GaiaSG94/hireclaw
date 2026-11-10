@@ -3,11 +3,11 @@ use near_sdk::{env, near_bindgen, AccountId, Promise};
 
 use crate::errors::*;
 
-use crate::BossContract;
-use crate::BossContractExt;
+use crate::HireclawContract;
+use crate::HireclawContractExt;
 
 #[near_bindgen]
-impl BossContract {
+impl HireclawContract {
     pub fn deliver(&mut self, job_id: String, result_hash: String, n_validated: u32, gold_reveal: String) {
         self.require_agent();
         let mut job = self.jobs.get(&job_id).unwrap_or_else(|| env::panic_str(ERR_UNKNOWN_JOB));

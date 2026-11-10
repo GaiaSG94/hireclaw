@@ -18,7 +18,7 @@ build-contract:
 test-contract:
 	@cd contract && cargo test
 
-test-sandbox:
+test-sandbox: build-contract
 	@cd contract/integration-tests && NEAR_SANDBOX_BIN_PATH=$${NEAR_SANDBOX_BIN_PATH:-/home/baptiste/.local/near-sandbox/near-sandbox} cargo test --test t01_sandbox
 
 web:

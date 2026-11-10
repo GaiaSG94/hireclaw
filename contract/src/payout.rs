@@ -4,11 +4,11 @@ use near_sdk::{env, near_bindgen, AccountId};
 use crate::errors::*;
 use crate::models::*;
 use crate::BatchItem;
-use crate::BossContract;
-use crate::BossContractExt;
+use crate::HireclawContract;
+use crate::HireclawContractExt;
 
 #[near_bindgen]
-impl BossContract {
+impl HireclawContract {
     pub fn pay_batch(&mut self, job_id: String, items: Vec<BatchItem>, amount: Option<U128>) -> U128 {
         self.require_agent();
         self.require_active();

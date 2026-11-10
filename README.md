@@ -103,7 +103,7 @@ Le smart contract de production est écrit en Rust avec `near-sdk` v5 dans `cont
 
 ```sh
 make test-contract   # 11 tests unitaires VMContextBuilder (attaques et règles)
-make build-contract  # build WASM optimisé + ABI (target/near/boss_contract.wasm, 219 KB)
+make build-contract  # build WASM optimisé + ABI (target/near/hireclaw_contract.wasm, 219 KB)
 make test-sandbox   # test d'intégration sur sandbox NEAR réel (cycle complet)
 ```
 

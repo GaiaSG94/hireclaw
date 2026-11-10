@@ -4,8 +4,8 @@ use near_sdk::{env, near_bindgen, AccountId, PromiseOrValue};
 
 use crate::errors::*;
 use crate::models::*;
-use crate::BossContract;
-use crate::BossContractExt;
+use crate::HireclawContract;
+use crate::HireclawContractExt;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -17,7 +17,7 @@ pub struct OrderMsg {
 }
 
 #[near_bindgen]
-impl BossContract {
+impl HireclawContract {
     pub fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128> {
         assert_eq!(env::predecessor_account_id(), self.token, "token only");
         self.require_active();

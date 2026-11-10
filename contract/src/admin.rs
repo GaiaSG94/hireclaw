@@ -5,8 +5,8 @@ use near_sdk::{env, near_bindgen, AccountId, Promise};
 use crate::errors::*;
 use crate::models::*;
 use crate::rules::RulesConfig;
-use crate::BossContract;
-use crate::BossContractExt;
+use crate::HireclawContract;
+use crate::HireclawContractExt;
 
 #[derive(Serialize)]
 #[cfg_attr(not(target_arch = "wasm32"), derive(schemars::JsonSchema))]
@@ -24,7 +24,7 @@ pub struct SolvencyView {
 }
 
 #[near_bindgen]
-impl BossContract {
+impl HireclawContract {
     pub fn pause(&mut self, reason: Option<String>) {
         let caller = env::predecessor_account_id();
         if caller != self.owner && caller != self.agent {
