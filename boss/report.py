@@ -36,6 +36,12 @@ def _cached(key: str, seconds: int, build) -> Any:
     return value
 
 
+def readme_text() -> str:
+    """Le README tel quel : la documentation fait partie du site."""
+    path = ROOT / "README.md"
+    return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
 def _git(*args: str) -> str:
     try:
         return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True,

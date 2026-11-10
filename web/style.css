@@ -138,3 +138,15 @@ td.num { text-align: right; font-family: ui-monospace, monospace; }
   .stats { grid-template-columns: repeat(2, 1fr); }
   nav a { margin-left: 12px; }
 }
+.readme {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  white-space: pre-wrap;
+}

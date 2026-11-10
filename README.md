@@ -85,7 +85,21 @@ Fichiers < 500 lignes, fonctions < 50 lignes.
 - `C-I5` aucun renvoi sans les compteurs requis.
 - `C-I6` l'agent ne paie que des travailleurs embauchés ; le pire cas reste borné par les plafonds.
 
-## Site
+## Le site : tout le projet en six pages
+
+| Page | Contenu |
+|---|---|
+| `/work` | Le visiteur travaille : clé créée dans le navigateur, tâche, réponse signée, paiement |
+| `/boss` | Le tableau du patron : avancement, budget de paie, marge, travailleurs, paiements, décisions |
+| `/ledger` | Le registre local **et** un bloc lu en direct du contrat testnet |
+| `/demo` | La démo déterministe rejouée à la demande : commande, équipage, renvois, **11 attaques refusées**, livraison, invariants |
+| `/testnet` | Le contrat réel : adresses, règles on-chain, solvabilité lue sur la chaîne, **9 transactions de preuve**, ABI (24 méthodes), empreinte du WASM |
+| `/code` | L'inventaire du dépôt : fichiers, lignes, limites respectées, tests, commit, et le README intégral |
+
+URL publique (tunnel Cloudflare, `make public-url` pour l'afficher) :
+`/work` est la page d'entrée. Le backend ne détient aucune clé de signature :
+les clés des visiteurs restent dans leur navigateur, et les pages testnet ne font
+que des lectures RPC.
 
 `/work` crée une paire de clés dans le navigateur (WebCrypto Ed25519 ; si le
 navigateur ne le supporte pas, une clé de secours est générée côté serveur et
@@ -110,6 +124,27 @@ make test-sandbox   # test d'intégration sur sandbox NEAR réel (cycle complet)
 - **Standards respectés** : NEP-141 receiver (`ft_on_transfer`), sortie cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par le contrat à l'embauche pour les comptes implicites, NEP-297 pour les événements (`EVENT_JSON`), NEP-330 metadata, ABI standard NEAR 0.4.0 (24 méthodes).
 - **Règles de code** : 100 % des fichiers < 500 lignes (max 294 l `tests.rs`), 100 % des fonctions < 50 lignes (vérifié par scanner).
 - Documentation détaillée du contrat dans `contract/README.md`.
+
+## Testnet (réel, vérifiable)
+
+```sh
+make testnet-deploy   # idempotent ; FORCE_REDEPLOY=1 pour reflasher le code
+make testnet-e2e      # cycle complet on-chain, rejouable (job-000N suivant)
+make serve-public     # services systemd + tunnel public
+make public-url       # affiche l'URL publique et l'état des services
+```
+
+- Contrat : `hireclaw.defraie.testnet` — [explorateur](https://testnet.nearblocks.io/address/hireclaw.defraie.testnet)
+- Agent : `agent.hireclaw.defraie.testnet` · client : `client.hireclaw.defraie.testnet`
+- Jeton : `usd.panneau.testnet` (NEP-141, 6 décimales, `mint` ouvert pour le test)
+- Le cycle joué : `mint` → `ft_transfer_call` (commande 1,20 USDC) → `accept_job`
+  (marge 0,18 / paie 1,02) → `hire` × 3 → `pay_batch` × 3 → `reject minority` →
+  `deliver` (marge 60/30/10) → `withdraw` (**0,16 USDC réellement reçus** par la
+  travailleuse) → `get_solvency` : `balanced: true`.
+- Les hachages de transaction sont dans `testnet-proof.json` (public, sans secret).
+- Le faucet public est limité (HTTP 429) : les comptes sont créés comme
+  sous-comptes d'un compte financé, `HIRECLAW_PARENT` / `HIRECLAW_FUNDER` pour changer.
+- Clés : `~/.near-credentials/testnet/`, jamais dans le dépôt.
 
 ## Limites connues
 

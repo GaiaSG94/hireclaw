@@ -146,6 +146,8 @@ async function renderCode() {
     Object.entries(byLang).map(([lang, v]) => `<tr><td>${esc(lang)}</td>
       <td class="num">${v.n}</td><td class="num">${v.lines}</td></tr>`),
   );
+  const doc = await api("/api/readme");
+  $("code-readme").textContent = doc.text || "(README absent)";
   $("code-tree").innerHTML = table(
     ["fichier", "lignes"],
     c.files.map((f) => `<tr><td class="mono">${esc(f.path)}</td><td class="num">${f.lines}</td></tr>`),

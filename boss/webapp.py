@@ -164,6 +164,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(report.demo_report())
         if parsed.path == "/api/code":
             return self._json(report.code_report())
+        if parsed.path == "/api/readme":
+            return self._json({"text": report.readme_text()})
         if parsed.path == "/api/worker":
             return self._json(self.live.fallback_worker())
         return self._json({"error": "inconnu"}, 404)
