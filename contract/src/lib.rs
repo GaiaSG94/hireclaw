@@ -11,11 +11,14 @@ pub mod models;
 pub mod order;
 pub mod payout;
 pub mod payouts;
+pub mod relay;
 pub mod rules;
 pub mod settle;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_relay;
 
 use errors::*;
 use models::*;
@@ -33,17 +36,18 @@ pub struct BatchItem {
 
 /// Préfixes de stockage versionnés : un re-init part sur des clés neuves, donc
 /// aucune collection héritée ne peut survivre à un changement de forme d'état.
-const P_JOBS: &[u8] = b"j2";
-const P_JOB_KEYS: &[u8] = b"k2";
-const P_WORKERS: &[u8] = b"w2";
-const P_WORKER_KEYS: &[u8] = b"x2";
-const P_SETTLED: &[u8] = b"s2";
-const P_CLAIMED: &[u8] = b"c2";
-const P_LEDGER: &[u8] = b"l2";
-const P_WITHDRAWABLE: &[u8] = b"m2";
-const P_PENDING: &[u8] = b"p2";
-const P_PAYEES: &[u8] = b"y2";
-const P_PAYEE_INDEX: &[u8] = b"i2";
+const P_JOBS: &[u8] = b"j3";
+const P_JOB_KEYS: &[u8] = b"k3";
+const P_WORKERS: &[u8] = b"w3";
+const P_WORKER_KEYS: &[u8] = b"x3";
+const P_SETTLED: &[u8] = b"s3";
+const P_CLAIMED: &[u8] = b"c3";
+const P_LEDGER: &[u8] = b"l3";
+const P_WITHDRAWABLE: &[u8] = b"m3";
+const P_PENDING: &[u8] = b"p3";
+const P_PAYEES: &[u8] = b"y3";
+const P_PAYEE_INDEX: &[u8] = b"i3";
+const P_NONCES: &[u8] = b"n3";
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -62,6 +66,7 @@ pub struct HireclawContract {
     pub worker_keys: Vector<AccountId>,
     pub settled: LookupMap<String, bool>,
     pub claimed: LookupMap<String, bool>,
+    pub nonces: LookupMap<String, bool>,
     pub legacy_escrow: u128,
     pub ledger: Vector<Entry>,
     pub withdrawable: LookupMap<AccountId, u128>,
@@ -107,6 +112,7 @@ impl HireclawContract {
             worker_keys: Vector::new(P_WORKER_KEYS),
             settled: LookupMap::new(P_SETTLED),
             claimed: LookupMap::new(P_CLAIMED),
+            nonces: LookupMap::new(P_NONCES),
             legacy_escrow: 0,
             ledger: Vector::new(P_LEDGER),
             withdrawable: LookupMap::new(P_WITHDRAWABLE),

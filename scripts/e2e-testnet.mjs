@@ -34,6 +34,7 @@ const EXPLORER = "https://testnet.nearblocks.io";
 const WORKERS = ["alice", "bob", "chloe"];
 const WORKER_NEAR = 0.12;
 const RUN = Date.now().toString(36);
+const proofExtra = {};
 const txLog = [];
 
 // ------------------------------------------------------------------ plomberie
@@ -211,6 +212,25 @@ function signTicket(keyPair, ticket) {
   return toHex(signature.signature);
 }
 
+/** Compte implicite : l'identifiant EST l'hexadécimal de la clé publique Ed25519. */
+function implicitWorker() {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
+  const raw = publicKey.export({ format: "jwk" }).x;
+  const pubHex = Buffer.from(raw, "base64url").toString("hex");
+  return { account: pubHex, privateKey };
+}
+
+/** Ordre de retrait signé par le travailleur, déposable par n'importe quel relais. */
+function signWithdrawal(privateKey, ticket) {
+  const payload = JSON.stringify({
+    amount: Number(ticket.amount),
+    deadline_ms: ticket.deadline_ms,
+    nonce: ticket.nonce,
+    worker: ticket.worker,
+  });
+  return crypto.sign(null, Buffer.from(payload, "utf8"), privateKey).toString("hex");
+}
+
 // ------------------------------------------------------------------- scénario
 async function main() {
   console.log("=== Hireclaw — cycle complet on-chain (NEAR testnet) ===");
@@ -232,14 +252,14 @@ async function main() {
   await call(clientSigner, TOKEN, "mint", { account_id: CLIENT, amount: "5000000" }, { label: "mint 5.00 USDC" });
   console.log(`  solde client : ${usdc(await view(TOKEN, "ft_balance_of", { account_id: CLIENT }))} USDC`);
 
-  console.log("\n2. Commande payée d'avance (ft_transfer_call)");
+  console.log("\n2. Commande payée d'avance (ft_transfer_call, 2,00 USDC)");
   const deadlineMs = Date.now() + 24 * 3600 * 1000;
   const specHash = `sentiment-12-avis-${RUN}`;
   const orderMsg = JSON.stringify({ action: "order", n_items: 12, deadline_ms: deadlineMs, spec_hash: specHash });
   await call(clientSigner, TOKEN, "ft_transfer_call",
-    { receiver_id: CONTRACT, amount: "1200000", memo: `commande ${RUN}`, msg: orderMsg },
-    { gas: GAS_TRANSFER_CALL, deposit: ONE_YOCTO, label: "ft_transfer_call 1.20 USDC" });
-  const jobId = await findJobId(specHash, "1200000");
+    { receiver_id: CONTRACT, amount: "2000000", memo: `commande ${RUN}`, msg: orderMsg },
+    { gas: GAS_TRANSFER_CALL, deposit: ONE_YOCTO, label: "ft_transfer_call 2.00 USDC" });
+  const jobId = await findJobId(specHash, "2000000");
 
   console.log(`\n3. L'agent accepte ${jobId} : marge réservée, budget de paie figé`);
   const goldReveal = "r13:positif,r14:negatif,r15:neutre,r16:positif,r17:negatif";
@@ -250,6 +270,16 @@ async function main() {
   const job = await viewStable(CONTRACT, "get_job", { job_id: jobId },
     (j) => j && Number(j.margin_reserved) > 0);
   console.log(`  marge réservée ${usdc(job.margin_reserved)} · budget de paie ${usdc(job.payroll_budget)}`);
+
+  // Mode "commande du site" : on ouvre une commande, on l'accepte, on s'arrête là.
+  // Le site paie ensuite les visiteurs sur cette commande, via le relais local.
+  if (process.env.SITE_JOB === "1") {
+    DEPLOYMENT.site_job = jobId;
+    DEPLOYMENT.site_job_at = new Date().toISOString();
+    fs.writeFileSync(path.join(ROOT_DIR, "testnet-deployment.json"), JSON.stringify(DEPLOYMENT, null, 2));
+    console.log(`\ncommande du site enregistrée : ${jobId} (testnet-deployment.json)`);
+    return;
+  }
 
   console.log("\n4. Embauche de trois travailleurs");
   const accounts = [];
@@ -299,12 +329,38 @@ async function main() {
   };
   ticket.signature = signTicket(keyPair, ticket);
 
-  console.log("  attente du délai payer-ou-refuser (5 s)...");
-  await sleep(7000);
-  await call(signer(accounts[0]), CONTRACT, "claim_unpaid", { ticket },
-    { label: "claim_unpaid (le travailleur réclame son bon)" });
+  const rules = await view(CONTRACT, "get_rules", {});
+  const delayMs = (Number(rules.pay_or_reject_seconds) + 1) * 1000;
+  console.log(`  attente du délai payer-ou-refuser (${rules.pay_or_reject_seconds} s)...`);
+  await sleep(delayMs);
+  // relayé par l'agent : le travailleur n'envoie aucune transaction
+  await call(agentSigner, CONTRACT, "claim_unpaid", { ticket },
+    { label: "claim_unpaid relayé (le travailleur n'envoie rien)" });
   const aliceUsdcAfterClaim = await viewStable(TOKEN, "ft_balance_of", { account_id: accounts[0] }, (v) => Number(v) > 0);
   console.log(`  solde USDC d'${WORKERS[0]} après réclamation : ${usdc(aliceUsdcAfterClaim)}`);
+
+  console.log("\n6bis. Un visiteur sans NEAR : compte implicite, paie et retrait relayés");
+  const visitor = implicitWorker();
+  console.log(`  compte implicite : ${visitor.account.slice(0, 16)}… (clé créée ici, jamais de NEAR)`);
+  await call(agentSigner, CONTRACT, "hire", { worker: visitor.account }, { label: "hire visiteur implicite" });
+  await call(agentSigner, CONTRACT, "pay_batch", {
+    job_id: jobId,
+    items: [{ task_id: `t-${RUN}-vis`, worker: visitor.account, gold: false }],
+    amount: null,
+  }, { label: "pay_batch visiteur (0.02 USDC)" });
+
+  const wTicket = {
+    worker: visitor.account,
+    amount: "20000",
+    nonce: Date.now() % 1000000,
+    deadline_ms: Date.now() + 120000,
+  };
+  wTicket.signature = signWithdrawal(visitor.privateKey, wTicket);
+  await call(agentSigner, CONTRACT, "withdraw_signed", { ticket: wTicket },
+    { label: "withdraw_signed relayé (ordre signé par le visiteur)" });
+  const visitorUsdc = await viewStable(TOKEN, "ft_balance_of", { account_id: visitor.account }, (v) => Number(v) > 0);
+  console.log(`  le visiteur détient ${usdc(visitorUsdc)} USDC sans avoir envoyé une seule transaction`);
+  proofExtra.visitor = { account: visitor.account, usdc: visitorUsdc };
 
   console.log("\n7. Livraison : révélation des contrôles, marge ventilée 60/30/10");
   await call(agentSigner, CONTRACT, "deliver",
@@ -320,6 +376,7 @@ async function main() {
   const worker = await view(CONTRACT, "get_worker", { account: accounts[0] });
   console.log(`  compteur du travailleur : ${worker.tasks_paid} tâche(s) payée(s), exactitude ${worker.accuracy_pct}%`);
 
+
   console.log("\n9. Solvabilité et invariants on-chain");
   const solvency = await viewStable(CONTRACT, "get_solvency", {}, (s) => s.balanced === true);
   console.log(`  balance ${usdc(solvency.balance)} = sum ${usdc(solvency.sum)} → balanced ${solvency.balanced}`);
@@ -328,6 +385,7 @@ async function main() {
 
   const proof = {
     ...DEPLOYMENT,
+    ...proofExtra,
     e2e_completed_at: new Date().toISOString(),
     job_id: jobId,
     transactions: txLog,

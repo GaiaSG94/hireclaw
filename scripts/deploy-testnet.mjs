@@ -30,7 +30,7 @@ const RULES = {
   gold_share_pct: 20,
   min_golds_before_fire: 5,
   fire_below_accuracy_pct: 60,
-  pay_or_reject_seconds: Number(process.env.HIRECLAW_PAY_OR_REJECT_S ?? 5),
+  pay_or_reject_seconds: Number(process.env.HIRECLAW_PAY_OR_REJECT_S ?? 120),
   inference_max_spend_per_day: "500000",
   revenue_split: [60, 30, 10],
   kill_switch: false,

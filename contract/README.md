@@ -1,6 +1,6 @@
 # HireclawContract — contrat NEAR de Hireclaw (agent-patron)
 
-Smart contract écrit avec `near-sdk` v5, compilé en wasm32 (`target/near/hireclaw_contract.wasm`, 237.9 Ko) avec ABI standard v0.4.0.
+Smart contract écrit avec `near-sdk` v5, compilé en wasm32 (`target/near/hireclaw_contract.wasm`, 244.4 Ko) avec ABI standard v0.4.0.
 
 Applique **strictement** le code du travail défini par le propriétaire :
 salaires plancher/plafond, marge réservée intouchable, plafonds journaliers
@@ -71,6 +71,14 @@ near contract call-function as-transaction hireclaw.<ton-compte>.testnet new \
 - `deliver(job_id, result_hash, n_validated, gold_reveal)` : vérifie la révélation des contrôles (`gold_reveal` vs `gold_commit`), ventile la marge (60 % propriétaire, 30 % réserve, 10 % contributeurs).
 - `record_cost(provider, amount, job_id)` : paie les coûts d'inférence de l'agent exclusivement sur la marge réservée de la commande.
 
+### Relais sans gas (le travailleur ne signe jamais de transaction)
+- `claim_unpaid(ticket)` : n'importe qui peut déposer un bon signé par l'agent ; l'argent
+  va toujours au bénéficiaire nommé dans la signature (« le silence vaut paiement »).
+- `withdraw_signed(ticket)` : le travailleur signe `{amount, deadline_ms, nonce, worker}`
+  avec sa clé Ed25519 ; un relais dépose. La clé publique est dérivée de l'identifiant
+  du compte implicite (l'hexadécimal de la clé), donc aucune inscription n'est requise.
+  Nonce unique et échéance empêchent le rejeu ; montant et destinataire sont figés.
+
 ### Client & Travailleurs
 - `refund(job_id)` : le client récupère tout budget non dépensé si l'échéance est passée sans livraison.
 - `withdraw(amount)` : travailleur ou client retire ses USDC par cross-contract `ft_transfer`.
@@ -86,6 +94,20 @@ near contract call-function as-transaction hireclaw.<ton-compte>.testnet new \
 - `get_rules()`
 - `get_ledger(from, limit)`
 - `get_solvency()` : vue de l'invariant de conservation comptable (`balanced == true`).
+
+## Une leçon NEAR : redéployer ne vide pas l'état
+
+`#[init(ignore_state)]` réécrit la racine de l'état, mais **pas** les collections :
+les `LookupMap`/`Vector` vivent sous leurs propres clés de stockage et survivent, ce
+qui produit un état hybride incohérent (un vecteur de longueur 0 à côté de ses
+anciennes entrées). L'itération de stockage (`storage_iter_prefix`) est par ailleurs
+dépréciée et refusée par le runtime.
+
+Parade retenue : **les préfixes de collections portent la version de l'état**
+(`b"j3"`, `b"w3"`, `b"s3"`, `b"m3"`, `b"n3"`…). Un redéploiement avec une nouvelle
+version repart donc sur des clés neuves, donc sur des collections vides — sans avoir
+besoin de supprimer le compte. Les anciennes clés restent en stockage (coût minime)
+mais sont inaccessibles.
 
 ## Événements NEP-297
 Le contrat émet des logs standards pour l'indexation :

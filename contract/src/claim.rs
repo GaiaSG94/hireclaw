@@ -72,10 +72,9 @@ impl HireclawContract {
         self.log_entry("set_agent_key", caller, "", 0, &agent_pk[..16.min(agent_pk.len())], "");
     }
 
+    /// Tout relais peut déposer un bon signé : l'argent est toujours crédité au
+    /// bénéficiaire nommé dans la signature (`ticket.worker`), jamais à l'appelant.
     pub fn claim_unpaid(&mut self, ticket: Ticket) -> U128 {
-        if env::predecessor_account_id() != ticket.worker {
-            env::panic_str(ERR_NOT_AGENT);
-        }
         let digest = self.verify_ticket(&ticket);
         let mut job = self.jobs.get(&ticket.job_id).unwrap_or_else(|| env::panic_str(ERR_UNKNOWN_JOB));
         if job.state != JobState::Accepted {

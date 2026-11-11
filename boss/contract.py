@@ -9,7 +9,9 @@ from .errors import PatronError
 from .hashing import sha256_hex
 from .money import fmt, pct_of
 from .model import ACTIVE, FIRED, SENIOR, TRIAL, Buckets, Entry, Job, Worker
+from . import views
 from .ticket import Ticket, check as ticket_ok
+from .withdrawal import Withdrawal, check as withdrawal_ok
 
 DAY_MS = 86_400_000
 REGISTRATION_FEE_NEAR = 1_250_000_000_000_000_000_000  # 0,00125 N par inscription au jeton
@@ -47,6 +49,7 @@ class Contract:
         self.pubkeys = pubkeys if pubkeys is not None else {}
         self.agent_pubkey = agent_pubkey
         self.claimed: set[str] = set()
+        self.pending_out: dict[str, int] = {}
         self._seq = 0
 
     # ------------------------------------------------------------------ temps
@@ -406,6 +409,34 @@ class Contract:
     def credit_withdrawable(self, account: str, amount: int) -> None:
         self.withdrawable[account] = self.withdrawable.get(account, 0) + amount
 
+    def apply_relayed_withdrawal(self, order: Withdrawal, *, relayer: str) -> int:
+        """Retrait signé par le travailleur, déposé par un relais (le site, l'agent…).
+
+        Le bénéficiaire et le montant sont figés par la signature : un relais ne peut
+        ni se payer à la place du travailleur, ni gonfler le montant. Le nonce empêche
+        le rejeu, l'échéance borne la validité de l'ordre.
+        """
+        if not withdrawal_ok(order):
+            raise PatronError("ERR_BAD_SIGNATURE", order.worker)
+        key = f"{order.worker}#{order.nonce}"
+        if key in self.claimed:
+            raise PatronError("ERR_ALREADY_SETTLED", "ordre déjà exécuté")
+        available = self.withdrawable.get(order.worker, 0)
+        if order.amount <= 0 or order.amount > available:
+            raise PatronError("ERR_INSUFFICIENT", f"{fmt(available)} disponible")
+        self.claimed.add(key)
+        self.withdrawable[order.worker] = available - order.amount
+        self.pending_out[order.worker] = self.pending_out.get(order.worker, 0) + order.amount
+        self._log("withdraw_signed", order.worker, amount=order.amount,
+                  detail=f"relayé par {relayer}", reason="ordre signé")
+        return order.amount
+
+    def settle_payout(self, worker: str, amount: int) -> None:
+        """Le jeton confirme le transfert : l'argent quitte la garde du contrat."""
+        self.pending_out[worker] = max(0, self.pending_out.get(worker, 0) - amount)
+        self.balance -= amount
+        self._log("paid", worker, amount=amount, detail="transfer confirmed")
+
     # ------------------------------------------------------------------ pause
     def pause(self, reason: str = "coupe-circuit", *, actor: str | None = None) -> None:
         actor = actor or self.owner
@@ -422,47 +453,21 @@ class Contract:
         self._log("resume", actor, detail="reprise : les tâches en attente sont payées")
 
     # ------------------------------------------------------------------ lectures
+    # (implémentation dans boss/views.py pour rester sous 500 lignes par fichier)
     def get_job(self, job_id: str) -> dict:
-        return self._job(job_id).to_dict()
+        return views.get_job(self, job_id)
 
     def get_worker(self, account: str) -> dict:
-        return self._worker(account).to_dict()
+        return views.get_worker(self, account)
 
     def get_ledger(self, limit: int = 50, kind: str | None = None) -> list[dict]:
-        entries = [e for e in self.ledger if kind is None or e.kind == kind]
-        return [e.to_dict() for e in entries[-limit:]]
+        return views.get_ledger(self, limit, kind)
 
     def get_solvency(self) -> dict:
-        held = sum(j.payroll_left + j.margin_reserved for j in self.jobs.values() if j.open)
-        return {
-            "balance": self.balance,
-            "payroll_held": sum(j.payroll_left for j in self.jobs.values() if j.open),
-            "margins_held": sum(j.margin_reserved for j in self.jobs.values() if j.open),
-            "buckets": self.buckets.to_dict(),
-            "withdrawable": dict(self.withdrawable),
-            "client_wallets": dict(self.balances),
-            "near_balance": self.near_balance,
-            "sum": held + self.buckets.total + sum(self.withdrawable.values()),
-        }
+        return views.get_solvency(self)
 
     def workers_table(self) -> list[dict]:
-        return [w.to_dict() for w in self.workers.values()]
+        return views.workers_table(self)
 
     def check_invariants(self) -> list[str]:
-        problems: list[str] = []
-        if self.balance < 0:
-            problems.append(f"solde négatif : {self.balance}")
-        for job in self.jobs.values():
-            if job.payroll_spent > job.payroll_budget:
-                problems.append(f"{job.id}: paie {job.payroll_spent} > budget {job.payroll_budget}")
-            if job.payroll_budget < 0 or job.margin_reserved < 0:
-                problems.append(f"{job.id}: budget ou marge négatif")
-        solvency = self.get_solvency()
-        if self.balance != solvency["sum"]:
-            problems.append(f"conservation : solde {self.balance} != {solvency['sum']}")
-        if any(v < 0 for v in self.withdrawable.values()):
-            problems.append("versement en attente négatif")
-        for key in self.settled:
-            if not isinstance(key, tuple) or len(key) != 3:
-                problems.append(f"clé de règlement invalide : {key}")
-        return problems
+        return views.check_invariants(self)

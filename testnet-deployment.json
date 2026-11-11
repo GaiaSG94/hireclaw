@@ -26,5 +26,7 @@
     "kill_switch": false
   },
   "wasm_sha256": "841e19dd4c06cd714217daca285fb30e0ffc70044d28cff581a579461470367f",
-  "explorer": "https://testnet.nearblocks.io/address/hireclaw.defraie.testnet"
+  "explorer": "https://testnet.nearblocks.io/address/hireclaw.defraie.testnet",
+  "site_job": "job-0004",
+  "site_job_at": "2026-11-11T00:26:03.164Z"
 }

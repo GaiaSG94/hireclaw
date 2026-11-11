@@ -27,127 +27,131 @@
   },
   "wasm_sha256": "841e19dd4c06cd714217daca285fb30e0ffc70044d28cff581a579461470367f",
   "explorer": "https://testnet.nearblocks.io/address/hireclaw.defraie.testnet",
-  "e2e_completed_at": "2026-11-10T21:42:19.551Z",
-  "job_id": "job-0001",
+  "visitor": {
+    "account": "794983f13ed6ee3708b459cca7586a09fe20806bf2deb857ecac4c8e22d09421",
+    "usdc": "20000"
+  },
+  "e2e_completed_at": "2026-11-11T00:05:31.994Z",
+  "job_id": "job-0003",
   "transactions": [
     {
       "step": "mint 5.00 USDC",
       "ok": true,
-      "tx": "3njZ8TizuLWGVwRyYRssbwJtKqgaa7d9omw7pm6CaBSu",
-      "url": "https://testnet.nearblocks.io/txns/3njZ8TizuLWGVwRyYRssbwJtKqgaa7d9omw7pm6CaBSu"
+      "tx": "GgQY3HjpfVbEeryFsBFUecRaVRtpiPzotU742rjQuric",
+      "url": "https://testnet.nearblocks.io/txns/GgQY3HjpfVbEeryFsBFUecRaVRtpiPzotU742rjQuric"
     },
     {
-      "step": "ft_transfer_call 1.20 USDC",
+      "step": "ft_transfer_call 2.00 USDC",
       "ok": true,
-      "tx": "61E1VSzpp1R7qJDbvKKsEw6qMFCTxWCdKX4uxF5b7UwC",
-      "url": "https://testnet.nearblocks.io/txns/61E1VSzpp1R7qJDbvKKsEw6qMFCTxWCdKX4uxF5b7UwC"
+      "tx": "7FufPxypqVqevzXoNyNDW9cN6oMnFr7RZYA83aamfJQF",
+      "url": "https://testnet.nearblocks.io/txns/7FufPxypqVqevzXoNyNDW9cN6oMnFr7RZYA83aamfJQF"
     },
     {
       "step": "accept_job 0.02 USDC/tâche",
       "ok": true,
-      "tx": "A7GSj3TjCdHJJBSs2x9EvgMRLBDB9GbmHTDqDFdCnTyk",
-      "url": "https://testnet.nearblocks.io/txns/A7GSj3TjCdHJJBSs2x9EvgMRLBDB9GbmHTDqDFdCnTyk"
-    },
-    {
-      "step": "hire alice",
-      "ok": true,
-      "tx": "EpuoLSes6WyzRDzRuoEvRBembYSECC3UUNRMUqWrHNfk",
-      "url": "https://testnet.nearblocks.io/txns/EpuoLSes6WyzRDzRuoEvRBembYSECC3UUNRMUqWrHNfk"
-    },
-    {
-      "step": "hire bob",
-      "ok": true,
-      "tx": "HXJYw8h4mVn3BzrfQLG3D9uet8N9QwgEsbcy9VbtrcSH",
-      "url": "https://testnet.nearblocks.io/txns/HXJYw8h4mVn3BzrfQLG3D9uet8N9QwgEsbcy9VbtrcSH"
-    },
-    {
-      "step": "hire chloe",
-      "ok": true,
-      "tx": "woZbg8NMwuhAfMjC7GCdJQxRUsKKg5GbEHanXKeoqHi",
-      "url": "https://testnet.nearblocks.io/txns/woZbg8NMwuhAfMjC7GCdJQxRUsKKg5GbEHanXKeoqHi"
+      "tx": "2cyxwF1rdSBqCs5e2hoVGbKV8Ennm5rMui6hXkGCYaT4",
+      "url": "https://testnet.nearblocks.io/txns/2cyxwF1rdSBqCs5e2hoVGbKV8Ennm5rMui6hXkGCYaT4"
     },
     {
       "step": "pay_batch alice (4 tâches = 0.08 USDC)",
       "ok": true,
-      "tx": "2tnSvgDbc8FKjop1kpYtje98qhFU4QGW4evdjzPPE9AM",
-      "url": "https://testnet.nearblocks.io/txns/2tnSvgDbc8FKjop1kpYtje98qhFU4QGW4evdjzPPE9AM"
+      "tx": "EPLc6TjBa9Nd5XhpTAitJQeErD6mQsDWxxE8UcSWo1Hn",
+      "url": "https://testnet.nearblocks.io/txns/EPLc6TjBa9Nd5XhpTAitJQeErD6mQsDWxxE8UcSWo1Hn"
     },
     {
       "step": "pay_batch bob (4 tâches = 0.08 USDC)",
       "ok": true,
-      "tx": "DXdog27ZLJSgSCiyaXNt1NGEpUQiZtphL3Wv8H5Q6Lzd",
-      "url": "https://testnet.nearblocks.io/txns/DXdog27ZLJSgSCiyaXNt1NGEpUQiZtphL3Wv8H5Q6Lzd"
+      "tx": "2gmQoVv3cJQTEGtkN6WyAcv2vf6BPM5gBkJiMdCdYNkk",
+      "url": "https://testnet.nearblocks.io/txns/2gmQoVv3cJQTEGtkN6WyAcv2vf6BPM5gBkJiMdCdYNkk"
     },
     {
       "step": "pay_batch chloe (4 tâches = 0.08 USDC)",
       "ok": true,
-      "tx": "4a57r1DJmcrg2itCRyocpAjDTrf2dK7P3hjBoqXKgXeG",
-      "url": "https://testnet.nearblocks.io/txns/4a57r1DJmcrg2itCRyocpAjDTrf2dK7P3hjBoqXKgXeG"
+      "tx": "8cFv4BLyXDMUbGXPYfnKN2PyJ214pbVpjcP4B1diNYTT",
+      "url": "https://testnet.nearblocks.io/txns/8cFv4BLyXDMUbGXPYfnKN2PyJ214pbVpjcP4B1diNYTT"
     },
     {
       "step": "reject minority",
       "ok": true,
-      "tx": "9Z9YdcJZe541U3eVAs4vp7pyLVRdTCsxMjBJeYCpNA93",
-      "url": "https://testnet.nearblocks.io/txns/9Z9YdcJZe541U3eVAs4vp7pyLVRdTCsxMjBJeYCpNA93"
+      "tx": "AZH7T3DsALJvi9kN4qEKjkW37mJSgMKqaxLmhuW4F7Q7",
+      "url": "https://testnet.nearblocks.io/txns/AZH7T3DsALJvi9kN4qEKjkW37mJSgMKqaxLmhuW4F7Q7"
     },
     {
       "step": "set_agent_key (clé de signature de l'agent)",
       "ok": true,
-      "tx": "9UAEACZGqfUxA6dpJ55ioMdxUSLZTUDNGcAJJ1pLunwM",
-      "url": "https://testnet.nearblocks.io/txns/9UAEACZGqfUxA6dpJ55ioMdxUSLZTUDNGcAJJ1pLunwM"
+      "tx": "77ekjDGRVodG7YVLXTCmf3j7WhbLL6oUSSowi67Szsiw",
+      "url": "https://testnet.nearblocks.io/txns/77ekjDGRVodG7YVLXTCmf3j7WhbLL6oUSSowi67Szsiw"
     },
     {
-      "step": "claim_unpaid (le travailleur réclame son bon)",
+      "step": "claim_unpaid relayé (le travailleur n'envoie rien)",
       "ok": true,
-      "tx": "Hmij56VviMDmcBbiCdCFSgCAoGUjpbyRwTDhPEpSGqrm",
-      "url": "https://testnet.nearblocks.io/txns/Hmij56VviMDmcBbiCdCFSgCAoGUjpbyRwTDhPEpSGqrm"
+      "tx": "8nQn8CgraQ8WpcBRMB6YQ213Lu1sPYkmgat9H1ULKmqQ",
+      "url": "https://testnet.nearblocks.io/txns/8nQn8CgraQ8WpcBRMB6YQ213Lu1sPYkmgat9H1ULKmqQ"
+    },
+    {
+      "step": "hire visiteur implicite",
+      "ok": true,
+      "tx": "HruUo1PzfovfNzqFvaXqKBWHWCVBA4hvkdEZxtH5dD4W",
+      "url": "https://testnet.nearblocks.io/txns/HruUo1PzfovfNzqFvaXqKBWHWCVBA4hvkdEZxtH5dD4W"
+    },
+    {
+      "step": "pay_batch visiteur (0.02 USDC)",
+      "ok": true,
+      "tx": "8BeWHSNfb4CpyaScdEqQ9x6jpRPHbwWdvLtr4WEUD5SB",
+      "url": "https://testnet.nearblocks.io/txns/8BeWHSNfb4CpyaScdEqQ9x6jpRPHbwWdvLtr4WEUD5SB"
+    },
+    {
+      "step": "withdraw_signed relayé (ordre signé par le visiteur)",
+      "ok": true,
+      "tx": "DuoAvupqyKyV2asfUGSc6AiG8ty8c2FKk5C4CMiSYc1y",
+      "url": "https://testnet.nearblocks.io/txns/DuoAvupqyKyV2asfUGSc6AiG8ty8c2FKk5C4CMiSYc1y"
     },
     {
       "step": "deliver",
       "ok": true,
-      "tx": "6xcspUs9KEkKutETQR9PtSWRiYJRbjs58FgRxNpRzGVj",
-      "url": "https://testnet.nearblocks.io/txns/6xcspUs9KEkKutETQR9PtSWRiYJRbjs58FgRxNpRzGVj"
+      "tx": "89Th188EYpuvJ9DpP9Ar1inZFSWZSfNo9w1eC6M4Xks1",
+      "url": "https://testnet.nearblocks.io/txns/89Th188EYpuvJ9DpP9Ar1inZFSWZSfNo9w1eC6M4Xks1"
     },
     {
       "step": "withdraw alice",
       "ok": true,
-      "tx": "aMgRgkYhAzBB1XKGd2nDGdDx2krjgVS6RGJ65hPteoK",
-      "url": "https://testnet.nearblocks.io/txns/aMgRgkYhAzBB1XKGd2nDGdDx2krjgVS6RGJ65hPteoK"
+      "tx": "G2BzRthRLaYTdN2JAJDGktrKhEkevED9ApnpknvaELNg",
+      "url": "https://testnet.nearblocks.io/txns/G2BzRthRLaYTdN2JAJDGktrKhEkevED9ApnpknvaELNg"
     }
   ],
   "solvency": {
-    "balance": "1200000",
+    "balance": "4980000",
     "payroll_held": "0",
     "margins_held": "0",
     "buckets": {
-      "owner": "564000",
-      "reserve": "282000",
-      "contributors": "94000"
+      "owner": "2640000",
+      "reserve": "1320000",
+      "contributors": "440000"
     },
-    "withdrawable_total": "160000",
+    "withdrawable_total": "480000",
     "pending_out_total": "100000",
     "legacy_escrow": "0",
-    "sum": "1200000",
+    "sum": "4980000",
     "balanced": true
   },
   "job": {
-    "id": "job-0001",
+    "id": "job-0003",
     "client": "client.hireclaw.defraie.testnet",
-    "budget": "1200000",
+    "budget": "2000000",
     "n_items": 12,
-    "deadline_ms": 1794433291964,
-    "spec_hash": "sentiment-12-avis-mwb7t2k3",
-    "created_ms": 1794346894417,
+    "deadline_ms": 1794441760362,
+    "spec_hash": "sentiment-12-avis-mwbcukor",
+    "created_ms": 1794355362996,
     "state": "Delivered",
     "pay_per_task": "20000",
     "margin_reserved": "0",
-    "payroll_budget": "260000",
-    "payroll_spent": "260000",
+    "payroll_budget": "280000",
+    "payroll_spent": "280000",
     "gold_commit": "b0c65de4061aade3f8f7d933c807fa2c9ad34c0b8f333f420e29b65b087d8852",
     "gold_reveal": "r13:positif,r14:negatif,r15:neutre,r16:positif,r17:negatif",
-    "result_hash": "sha256-jeu-mwb7t2k3",
+    "result_hash": "sha256-jeu-mwbcukor",
     "n_validated": 12,
-    "delivered_ms": 1794346935608,
+    "delivered_ms": 1794355527081,
     "inference_spent": "0"
   }
 }

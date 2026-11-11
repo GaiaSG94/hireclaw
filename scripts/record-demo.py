@@ -28,25 +28,32 @@ async def step(page, seconds):
 
 
 async def work_sequence(page, url):
-    await page.goto(f"{url}/work", wait_until="networkidle")
+    """Le visiteur travaille jusqu'au paiement on-chain, puis retire ses gains."""
+    await page.goto(f"{url}/work", wait_until="domcontentloaded")
     await step(page, 2.5)
-
-    # trois tâches : le visiteur répond, le patron paie ou refuse
     for _ in range(3):
         try:
-            await page.wait_for_selector("#choices button", timeout=20000)
+            await page.wait_for_selector("#choices button", state="visible", timeout=15000)
+            buttons = await page.query_selector_all("#choices button")
+            await step(page, 0.8)
+            await buttons[len(buttons) // 2].click(timeout=5000)
+            await step(page, 2.4)
+            if "payé on-chain" in await page.inner_text("#toast"):
+                break
         except Exception:
-            break
-        buttons = await page.query_selector_all("#choices button")
-        if not buttons:
-            break
-        await step(page, 0.8)
-        await buttons[len(buttons) // 2].click()
-        await step(page, 1.8)
+            await step(page, 1.5)
+    try:
+        button = await page.query_selector("#withdraw-btn")
+        if button and "hidden" not in (await button.get_attribute("class") or ""):
+            await step(page, 1.0)
+            await button.click(timeout=5000)
+            await step(page, 4.0)
+    except Exception:
+        pass
 
 
 async def tour(page, url, path, seconds, scroll=True):
-    await page.goto(f"{url}{path}", wait_until="networkidle")
+    await page.goto(f"{url}{path}", wait_until="domcontentloaded")
     await step(page, seconds * 0.4)
     if scroll:
         height = await page.evaluate("document.body.scrollHeight")
@@ -72,12 +79,12 @@ async def record(url, out_path):
         )
         page = await context.new_page()
         await work_sequence(page, url)
-        await tour(page, url, "/boss", 13)
-        await tour(page, url, "/demo", 15)
-        await tour(page, url, "/testnet", 15)
-        await tour(page, url, "/ledger", 9)
-        await tour(page, url, "/code", 8)
-        await page.goto(f"{url}/work", wait_until="networkidle")
+        await tour(page, url, "/boss", 8)
+        await tour(page, url, "/demo", 9)
+        await tour(page, url, "/testnet", 9)
+        await tour(page, url, "/ledger", 5)
+        await tour(page, url, "/code", 4)
+        await page.goto(f"{url}/work", wait_until="domcontentloaded")
         await step(page, 4)
         await context.close()
         video = await page.video.path()

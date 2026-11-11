@@ -89,11 +89,11 @@ Fichiers < 500 lignes, fonctions < 50 lignes.
 
 | Page | Contenu |
 |---|---|
-| `/work` | Le visiteur travaille : clé créée dans le navigateur, tâche, réponse signée, paiement |
+| `/work` | Le visiteur travaille : clé Ed25519 dans le navigateur, réponse signée, **payé on-chain** (lien de transaction), bouton de retrait relayé |
 | `/boss` | Le tableau du patron : avancement, budget de paie, marge, travailleurs, paiements, décisions |
 | `/ledger` | Le registre local **et** un bloc lu en direct du contrat testnet |
 | `/demo` | La démo déterministe rejouée à la demande : commande, équipage, renvois, **11 attaques refusées**, livraison, invariants |
-| `/testnet` | Le contrat réel : adresses, règles on-chain, solvabilité lue sur la chaîne, **14 transactions de preuve**, ABI (29 méthodes), empreinte du WASM |
+| `/testnet` | Le contrat réel : adresses, règles on-chain, solvabilité lue sur la chaîne, **14 transactions de preuve**, ABI (30 méthodes), empreinte du WASM |
 | `/code` | L'inventaire du dépôt : fichiers, lignes, limites respectées, tests, commit, et le README intégral |
 
 URL publique (tunnel Cloudflare, `make public-url` pour l'afficher) :
@@ -117,11 +117,11 @@ Le smart contract de production est écrit en Rust avec `near-sdk` v5 dans `cont
 
 ```sh
 make test-contract   # 11 tests unitaires VMContextBuilder (attaques et règles)
-make build-contract  # build WASM optimisé + ABI (target/near/hireclaw_contract.wasm, 237.9 Ko)
+make build-contract  # build WASM optimisé + ABI (target/near/hireclaw_contract.wasm, 244.4 Ko)
 make test-sandbox   # test d'intégration sur sandbox NEAR réel (cycle complet)
 ```
 
-- **Standards respectés** : NEP-141 receiver (`ft_on_transfer`), sortie cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par le contrat à l'embauche pour les comptes implicites, NEP-297 pour les événements (`EVENT_JSON`), NEP-330 metadata, ABI standard NEAR 0.4.0 (29 méthodes).
+- **Standards respectés** : NEP-141 receiver (`ft_on_transfer`), sortie cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par le contrat à l'embauche pour les comptes implicites, NEP-297 pour les événements (`EVENT_JSON`), NEP-330 metadata, ABI standard NEAR 0.4.0 (30 méthodes).
 - **Règles de code** : 100 % des fichiers < 500 lignes (max 294 l `tests.rs`), 100 % des fonctions < 50 lignes (vérifié par scanner).
 - Documentation détaillée du contrat dans `contract/README.md`.
 

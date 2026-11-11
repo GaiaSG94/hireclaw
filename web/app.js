@@ -1,5 +1,8 @@
 // Hireclaw — front minimal : clé dans le navigateur, tâche, réponse signée, paiement.
-const state = { account: null, privateKey: null, fallback: false, task: null, shownAt: 0, busy: false };
+const state = {
+  account: null, privateKey: null, fallback: false, task: null, shownAt: 0, busy: false,
+  chain: null, earned: 0, withdrawing: false,
+};
 
 const $ = (id) => document.getElementById(id);
 const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -56,6 +59,9 @@ async function signPayload(payload) {
 async function workInit() {
   const local = await makeKey();
   if (!local) await fallbackWorker();
+  $("withdraw-btn").onclick = withdraw;
+  await refreshChain();
+  setInterval(refreshChain, 10000);
   $("identity").textContent =
     "compte implicite " + state.account.slice(0, 24) + "…" +
     (state.fallback ? " — clé de secours générée par le serveur (WebCrypto Ed25519 indisponible)" : " — clé créée dans ce navigateur");
@@ -107,17 +113,75 @@ async function submit(choice) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (res.retry) {
+    state.task = null;
+    setTimeout(nextTask, 400);
+    return;
+  }
   if (res.error) toast("Refusé : " + res.error, true);
-  else if (res.task_status === "pay") toast("+ " + usdc(card.pay_usdc));
+  else if (res.task_status === "pay") toast(res.chain_tx ? "+ " + usdc(card.pay_usdc) + " — payé on-chain" : "+ " + usdc(card.pay_usdc));
   else if (res.task_status === "reject") toast("Refusé : " + res.reason, true);
   else toast("En attente d'autres réponses");
+  if (res.chain_tx) showTx(res.chain_tx);
   if (res.worker) updateStats(res.worker);
   state.task = null;
   setTimeout(nextTask, 1000);
 }
 
+function showTx(tx) {
+  const note = $("withdraw-note");
+  note.classList.remove("hidden");
+  note.innerHTML = `Dernier paiement on-chain : ${link("https://testnet.nearblocks.io/txns/" + esc(tx), tx.slice(0, 10) + "…")}`;
+}
+
+async function refreshChain() {
+  const data = await api("/api/chain");
+  state.chain = data;
+  const line = $("chain-line");
+  if (!data.available) {
+    line.textContent = "Relais testnet absent : la démo tourne en local (aucune transaction réelle).";
+    $("withdraw-btn").classList.add("hidden");
+    return;
+  }
+  const left = (Number(data.payroll_left || 0) / 1e6).toFixed(2);
+  line.innerHTML = `Contrat ${esc(data.contract)} · commande ${esc(data.job || "—")} (${esc(data.job_state || "—")}) · ` +
+    `budget de paie restant ${left} USDC · ${link("https://testnet.nearblocks.io/address/" + esc(data.contract), "explorateur")}`;
+  const button = $("withdraw-btn");
+  button.classList.toggle("hidden", state.earned <= 0);
+}
+
+async function withdraw() {
+  if (state.withdrawing || !state.earned) return;
+  state.withdrawing = true;
+  $("withdraw-btn").disabled = true;
+  const nonce = Date.now() % 1000000;
+  const deadline = Date.now() + 120000;
+  // L'empreinte signée doit être identique octet pour octet à celle du contrat :
+  // clés triées, montant en nombre. Le ticket envoyé, lui, porte l'U128 en chaîne.
+  const payload = { amount: Number(state.earned), deadline_ms: deadline, nonce, worker: state.account };
+  const ticket = { worker: state.account, amount: String(state.earned), nonce, deadline_ms: deadline };
+  if (!state.fallback) ticket.signature = await signPayload(payload);
+  const res = await api("/api/withdraw", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ticket }),
+  });
+  state.withdrawing = false;
+  $("withdraw-btn").disabled = false;
+  if (res.ok) {
+    toast("Retrait relayé on-chain");
+    showTx(res.tx || (res.txs || [])[0] || "");
+    state.earned = 0;
+    $("withdraw-btn").classList.add("hidden");
+  } else {
+    toast("Retrait refusé : " + (res.error || res.detail || "erreur"), true);
+  }
+}
+
 function updateStats(worker) {
+  state.earned = Number(worker.earned_today) || 0;
   $("earned").textContent = usdc(worker.earned_today);
+  $("withdraw-btn").classList.toggle("hidden", !(state.earned > 0));
   $("paid").textContent = worker.tasks_paid;
   $("golds").textContent = worker.golds + (worker.golds ? ` (${worker.accuracy_pct}%)` : "");
 }
