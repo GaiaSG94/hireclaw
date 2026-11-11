@@ -98,6 +98,10 @@ async function renderTestnet() {
     : "<p class='muted'>Aucune transaction de preuve : lance <code>make testnet-e2e</code>.</p>";
 
   const abi = t.abi || [];
+  $("chain-abi-note").textContent = abi.length
+    ? "ABI du dépôt (build local). Le build déployé sur testnet expose une méthode de moins : "
+      + "promote (statut senior) attend le prochain redéploiement."
+    : "";
   $("chain-abi").innerHTML = abi.length
     ? table(["méthode", "type"], abi.map((f) => `<tr><td class="mono">${esc(f.name)}</td><td>${esc(f.kind)}</td></tr>`))
     : "<p class='muted'>ABI absente : lance <code>make build-contract</code>.</p>";
