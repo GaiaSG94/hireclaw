@@ -120,6 +120,38 @@ impl HireclawContract {
         );
     }
 
+    /// Promotion gagnée par les compteurs : 2 contrôles à 80 % pour passer actif,
+    /// 20 contrôles à 95 % pour passer senior. L'agent propose, le contrat vérifie.
+    pub fn promote(&mut self, worker: AccountId) -> WorkerStatus {
+        self.require_agent();
+        self.require_active();
+        let mut record = self.workers.get(&worker).unwrap_or_else(|| env::panic_str(ERR_NOT_HIRED));
+        let (golds, accuracy) = (record.golds(), record.accuracy_pct());
+        // Un travailleur peut franchir les deux paliers d'un coup (20 contrôles à 100 %) :
+        // on regarde d'abord le palier le plus haut, sinon le palier d'essai.
+        let next = if golds >= 20 && accuracy >= 95 {
+            WorkerStatus::Senior
+        } else if golds >= 2 && accuracy >= 80 {
+            WorkerStatus::Active
+        } else {
+            env::panic_str(ERR_FIRE_NOT_JUSTIFIED);
+        };
+        if record.status == WorkerStatus::Fired {
+            env::panic_str(ERR_WORKER_FIRED);
+        }
+        record.status = next;
+        self.workers.insert(&worker, &record);
+        self.log_entry(
+            "promote",
+            env::predecessor_account_id(),
+            "",
+            0,
+            worker.as_str(),
+            &format!("{}% sur {} contrôles", accuracy, golds),
+        );
+        record.status
+    }
+
     pub fn fire(&mut self, worker: AccountId) {
         self.require_agent();
         self.require_active();

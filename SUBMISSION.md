@@ -67,7 +67,7 @@ porter les règles du travail lui-même.
 | Client | `client.hireclaw.defraie.testnet` |
 | Jeton | `usd.panneau.testnet` (NEP-141, 6 décimales) |
 | WASM | 214 Ko |
-| ABI | NEAR 0.4.0, 30 méthodes |
+| ABI | NEAR 0.4.0, 31 méthodes dans le dépôt ; 30 déployées sur testnet (`promote` attend un redéploiement, faute de NEAR libre sur le compte contrat) |
 | sha256 du WASM | `bc2cdcd8be199d5ec1c84944acc8d1f4dbeaf6dd545aaea5fe541fdc88d9b4ca` |
 
 Standards respectés : récepteur NEP-141 (`ft_on_transfer`), sortie d'argent en
@@ -211,7 +211,7 @@ solvabilité, sans aucun secret.
 | Suite | Volume | Ce qu'elle prouve |
 |---|---|---|
 | Python (`make test`) | 36 tests | règles du contrat simulé, moteur de qualité, contrôles cachés, bon de travail signé (C-F14) |
-| Rust unitaires (`make test-contract`) | 20 tests (`VMContextBuilder`) | bornes de paie, plafonds, refus, renvoi justifié, double règlement |
+| Rust unitaires (`make test-contract`) | 22 tests (`VMContextBuilder`) | bornes de paie, plafonds, refus, renvoi justifié, double règlement |
 | Intégration (`make test-sandbox`) | 1 test sur sandbox NEAR réel | cycle complet, solvabilité `balanced: true` |
 
 ### 5.3 Onze attaques refusées, avec leur code exact
@@ -349,8 +349,8 @@ python3 -m venv .venv && . .venv/bin/activate && pip install -e .
 
 make demo          # l'histoire complète hors ligne, déterministe, « INVARIANTS OK »
 make attack        # les 11 attaques, refusées avec leur code exact
-make test          # 36 tests Python
-make test-contract # 20 tests unitaires Rust (VMContextBuilder)
+make test          # 44 tests Python
+make test-contract # 22 tests unitaires Rust (VMContextBuilder)
 make testnet-e2e   # cycle complet on-chain sur NEAR testnet (rejouable)
 ```
 

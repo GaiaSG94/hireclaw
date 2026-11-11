@@ -162,4 +162,37 @@ mod tests {
         ticket.signature = hex::encode(rogue_sk.sign(&crate::relay::canonical_withdraw(&ticket)).to_bytes());
         let _ = c.withdraw_signed(ticket);
     }
+
+    #[test]
+    fn test_promote_earns_senior_after_twenty_golds() {
+        let mut c = new_contract();
+        let jid = order_default_job(&mut c);
+        let (_, agent, _, _, w1) = accounts();
+        set_context(&agent);
+        c.accept_job(jid.clone(), U128(20_000), "dummy".into());
+        let _ = c.hire(w1.clone());
+        for i in 0..20 {
+            c.pay_batch(jid.clone(), vec![BatchItem {
+                task_id: format!("g{}", i), worker: w1.clone(), gold: true,
+            }], None);
+            if i >= 1 {
+                let _ = c.promote(w1.clone()); // dès 2 contrôles, la promotion est possible
+            }
+        }
+        assert_eq!(c.get_worker(w1).unwrap().status, crate::errors::WorkerStatus::Senior);
+        assert_eq!(c.get_solvency().balanced, true);
+    }
+
+    #[test]
+    #[should_panic(expected = "ERR_FIRE_NOT_JUSTIFIED")]
+    fn test_promote_refused_without_counters() {
+        let mut c = new_contract();
+        let jid = order_default_job(&mut c);
+        let (_, agent, _, _, w1) = accounts();
+        set_context(&agent);
+        c.accept_job(jid.clone(), U128(20_000), "dummy".into());
+        let _ = c.hire(w1.clone());
+        c.pay_batch(jid, vec![BatchItem { task_id: "g0".into(), worker: w1.clone(), gold: true }], None);
+        c.promote(w1); // un seul contrôle : pas de promotion
+    }
 }

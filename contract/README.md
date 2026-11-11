@@ -95,6 +95,12 @@ near contract call-function as-transaction hireclaw.<ton-compte>.testnet new \
 - `get_ledger(from, limit)`
 - `get_solvency()` : vue de l'invariant de conservation comptable (`balanced == true`).
 
+- **Décalage dépôt / testnet** : le dépôt compile 31 méthodes ; le build déployé sur
+  `hireclaw.defraie.testnet` en expose 30. La 31ᵉ (`promote`, statut senior) est testée
+  en unitaire et sur sandbox mais attend le prochain redéploiement : le compte contrat
+  n'a plus que 0,05 NEAR libre et un redéploiement exige de couvrir l'ancien et le
+  nouveau code simultanément. Vérifiable : `promote` renvoie `MethodNotFound` on-chain.
+
 ## Une leçon NEAR : redéployer ne vide pas l'état
 
 `#[init(ignore_state)]` réécrit la racine de l'état, mais **pas** les collections :
