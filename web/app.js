@@ -60,7 +60,7 @@ async function workInit() {
   const local = await makeKey();
   if (!local) await fallbackWorker();
   $("withdraw-btn").onclick = withdraw;
-  await refreshChain();
+  refreshChain();                    // never wait on the relay before showing the first task
   setInterval(refreshChain, 10000);
   $("identity").textContent =
     "implicit account " + state.account.slice(0, 24) + "…" +
@@ -189,7 +189,12 @@ function updateStats(worker) {
 // --------------------------------------------------------------------- boss
 function cells(rows) {
   return rows.map(([label, value]) =>
-    `<div class="cell"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join("");
+    `<div class="cell"><span>${esc(label)}</span><strong>${value && value.__html ? value.__html : esc(value)}</strong></div>`).join("");
+}
+
+// a cell value that is already safe HTML (built with link())
+function rawHtml(html) {
+  return { __html: html };
 }
 
 async function renderBoss() {

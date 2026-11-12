@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -16,9 +17,26 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 RELAY = os.environ.get("HIRECLAW_RELAY", "http://127.0.0.1:8790")
 TIMEOUT_S = float(os.environ.get("HIRECLAW_RELAY_TIMEOUT", "25"))
+DOWN_RETRY_S = 30.0  # once the relay is found absent, do not knock again for 30 s
+_down_until = 0.0
+
+
+def _relay_down() -> bool:
+    return time.monotonic() < _down_until
+
+
+def _mark_down(exc: Exception) -> None:
+    """Connection refused or timed out: skip the relay for a while (a refused
+    connection costs about 2 s on Windows, on every page refresh)."""
+    global _down_until
+    if isinstance(exc, (urllib.error.URLError, TimeoutError, OSError)) and \
+            not isinstance(exc, urllib.error.HTTPError):
+        _down_until = time.monotonic() + DOWN_RETRY_S
 
 
 def _post(path: str, body: dict) -> dict:
+    if _relay_down():
+        return {"ok": False, "error": "RELAY_UNREACHABLE", "detail": "relay absent"}
     request = urllib.request.Request(
         RELAY + path, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
     )
@@ -26,14 +44,18 @@ def _post(path: str, body: dict) -> dict:
         with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
             return json.loads(response.read().decode())
     except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
+        _mark_down(exc)
         return {"ok": False, "error": "RELAY_UNREACHABLE", "detail": str(exc)[:120]}
 
 
 def _get(path: str) -> dict | None:
+    if _relay_down():
+        return None
     try:
         with urllib.request.urlopen(RELAY + path, timeout=TIMEOUT_S) as response:
             return json.loads(response.read().decode())
-    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
+        _mark_down(exc)
         return None
 
 

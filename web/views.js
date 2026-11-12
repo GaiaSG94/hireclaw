@@ -77,7 +77,7 @@ async function renderTestnet() {
     ["NEP-141 token", t.token],
     ["WASM", t.wasm?.built ? `${(t.wasm.bytes / 1024).toFixed(0)} KB` : "not built"],
     ["sha256", (t.wasm?.sha256 || "").slice(0, 16) + "…"],
-    ["explorer", link(t.explorer, "nearblocks")],
+    ["explorer", rawHtml(link(t.explorer, "nearblocks"))],
   ]);
 
   $("chain-live").innerHTML = cells([
@@ -123,7 +123,7 @@ async function renderCode() {
   const c = await api("/api/code");
   const t = c.totals;
   $("code-head").innerHTML = cells([
-    ["repository", link(c.repo.github, "GaiaSG94/hireclaw")],
+    ["repository", rawHtml(link(c.repo.github, "GaiaSG94/hireclaw"))],
     ["branch", c.repo.branch],
     ["commit", c.repo.commit],
     ["last message", c.repo.subject],
