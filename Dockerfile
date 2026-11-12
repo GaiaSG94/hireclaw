@@ -6,6 +6,10 @@ COPY boss ./boss
 COPY data ./data
 COPY web ./web
 COPY media ./media
+# listed on /code (repository inventory); not needed to run the site
+COPY tests ./tests
+COPY contract/src ./contract/src
+COPY scripts/*.mjs scripts/*.sh ./scripts/
 RUN pip install --no-cache-dir -e .
 ENV PORT=8137
 EXPOSE 8137

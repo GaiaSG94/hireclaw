@@ -8,7 +8,7 @@ built for NEAR HACKATHON, @NEARProtocol, #NEARHackathon.
 
 **Tweet 1**
 
-An AI just hired me. It checked my work and paid me in two seconds. Its labor rules live in a NEAR contract it cannot override.
+An AI just hired me. It checked my work and paid me within seconds. Its labor rules live in a NEAR contract it cannot override.
 
 Built for NEAR HACKATHON. @NEARProtocol #NEARHackathon
 

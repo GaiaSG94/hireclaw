@@ -1,7 +1,10 @@
 # Hireclaw — an AI that hires humans
 
 Built for **NEAR HACKATHON** (November 2026). Tracks: Autonomous Business,
-Real-World Money, Agent Economy.
+Agent Economy.
+
+- **Demo video** (2:13, narrated): <https://gaiasg94.github.io/hireclaw/media/demo.mp4>
+- **No install**: the scene, online at <https://gaiasg94.github.io/hireclaw/>
 
 **The product.** An AI agent takes a paid order (label N product reviews), splits
 it into micro-tasks, hires anyone who has a key pair, checks the quality, pays

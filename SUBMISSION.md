@@ -8,6 +8,8 @@ rejections, daily caps — is written in the NEAR contract: the boss is an AI, a
 cannot deviate from these rules.
 
 - Public repository: <https://github.com/GaiaSG94/hireclaw>
+- Demo video (2:13, narrated): <https://gaiasg94.github.io/hireclaw/media/demo.mp4>
+- No-install scene (static, recorded ledger): <https://gaiasg94.github.io/hireclaw/>
 - Contract on NEAR testnet: `hireclaw.defraie.testnet`
 - Explorer: <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>
 
@@ -18,7 +20,6 @@ cannot deviate from these rules.
 | Track | Why we claim it |
 |---|---|
 | business / Autonomous Business | The agent is a single-function company: receive an order, produce a deliverable, collect payment. All the business logic (payroll budget, margin, reserves, kill switch) is executed by a contract, not by a spreadsheet: it is an autonomous business whose financial invariants are verified (`get_solvency` → `balanced: true`). |
-| realworld / Real-World Money | The rules are written in USDC and enforced in USDC, with no intermediary: the client advances 1.20 USDC, the contract locks the payroll and the margin, the worker receives 0.02 USDC per validated task, the remainder is split 60/30/10. The money for the work and the conditions of the work are the same on-chain object. |
 | agents / Agent Economy | This is the core of the project: an agent that is the *principal*, that hires, checks, pays, rejects and delivers. The other half of the agent economy — the half that produces human work at a machine's request — did not exist as a protocol. Here the agent depends on human recommendations, and those recommendations become a market with prices, checks and recourse, all inside the contract. |
 
 ---
@@ -120,9 +121,8 @@ rejects the transaction.
 | `/testnet` | addresses, on-chain rules, solvency read from the chain, proof transactions, ABI |
 | `/code` | repository inventory, tests, README |
 
-URL: `http://100.120.194.92:8137/work` (stable tailnet) and
-`https://beijing-gave-locking-examine.trycloudflare.com/work` (temporary public
-Cloudflare tunnel).
+Online without install: the scene at <https://gaiasg94.github.io/hireclaw/> (static
+copy, recorded ledger). Locally: `python -m boss.webapp`, then <http://127.0.0.1:8137/work>.
 
 ### 3.6 C-F14: the signed work ticket
 
@@ -315,10 +315,9 @@ cannot live on it, whereas a well-equipped human, in a few minutes, can.
   (simulated clock, micro-USDC balance kept by the simulated contract) so that it
   is deterministic and replayable in under two minutes. The real proof is the
   testnet cycle above, not the demo.
-- **The public URL is temporary.** The Cloudflare tunnel
-  (`beijing-gave-locking-examine.trycloudflare.com`) is a session tunnel; it will
-  go down. The tailnet URL `http://100.120.194.92:8137/work` is only stable inside
-  the team's network. The repository remains the durable source.
+- **The static copy replays a recorded run.** <https://gaiasg94.github.io/hireclaw/>
+  has no server behind it: its terminal prints the ledger of a recorded run
+  (`web/replay.json`). Working on `/work` needs the Python server.
 - **No meta-transaction for `claim_unpaid`.** The claim still requires the worker
   to send a transaction themselves (with an account funded in NEAR); the full
   implementation of the signed work ticket in a browser wallet is not done.
@@ -326,7 +325,7 @@ cannot live on it, whereas a well-equipped human, in a few minutes, can.
   channel is a single NEP-141 token on NEAR testnet; cash-out to other chains and
   photo tasks (capture, visual check) are out of scope for this version.
 - **Solvency is verified on testnet over a single cycle.** `balanced: true` was
-  obtained on job-0004; it still has to be replayed over several consecutive
+  obtained on job-0001; it still has to be replayed over several consecutive
   orders.
 
 ---

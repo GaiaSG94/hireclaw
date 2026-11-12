@@ -8,6 +8,7 @@ Three sources, no key, no write:
 from __future__ import annotations
 
 import hashlib
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -269,10 +270,11 @@ def _code_report() -> dict:
         },
         "repo": {
             "github": "https://github.com/GaiaSG94/hireclaw",
-            "commit": _git("rev-parse", "--short", "HEAD"),
+            # no .git inside the hosted image: Render passes the deployed commit and branch
+            "commit": _git("rev-parse", "--short", "HEAD") or os.environ.get("RENDER_GIT_COMMIT", "")[:7],
             "subject": _git("log", "-1", "--pretty=%s"),
             "date": _git("log", "-1", "--pretty=%cd", "--date=format:%Y-%m-%d %H:%M"),
-            "branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
+            "branch": _git("rev-parse", "--abbrev-ref", "HEAD") or os.environ.get("RENDER_GIT_BRANCH", ""),
         },
         "tests": {
             "python": 47,
