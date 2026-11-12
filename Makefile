@@ -49,3 +49,5 @@ install:
 
 clean:
 	@rm -rf runs __pycache__ boss/__pycache__ tests/__pycache__ .pytest_cache contract/target
+replay-snapshot:
+	@$(PY) -c "import json; from boss import report; open('web/replay.json', 'w', encoding='utf-8').write(json.dumps(report._replay_report(), ensure_ascii=False, separators=(',', ':')))"

@@ -38,8 +38,6 @@
     '<nav class="ctls">' +
       seg("segCase", "Use case", HC.USE_CASES.map((u, i) => [String(i), u.label])) +
       seg("segPhase", "Scale", [["0", "Phase 1"], ["1", "Network"]]) +
-      '<div class="ctl"><span>Terminal</span><div class="seg" id="segTerm">' + [["right", "Right"], ["below", "Below"], ["off", "Off"]].map(o =>
-        '<button data-v="' + o[0] + '"' + (o[0] === TERM ? ' class="on"' : "") + ">" + o[1] + "</button>").join("") + "</div></div>" +
     "</nav>" +
     '<div class="acts"><button class="ghost" id="openAll">Whole project</button>' +
     (STATIC ? "" : '<a class="ghost" href="/work">Work for the AI →</a>') +
@@ -100,7 +98,6 @@
   function bind(idn, fn) { $(idn).querySelectorAll("button").forEach(b => b.onclick = () => { $(idn).querySelectorAll("button").forEach(o => o.classList.toggle("on", o === b)); fn(b.dataset.v); }); }
   bind("segCase", v => { curCase = +v; world.setCase(curCase, curPhase === 1); });
   bind("segPhase", v => { curPhase = +v; world.setCase(curCase, curPhase === 1); });
-  bind("segTerm", v => { const u = new URL(location.href); u.searchParams.set("term", v); location.href = u.toString(); });
   $("run").onclick = () => world.toggle();
   $("next").onclick = () => world.next(); $("prev").onclick = () => world.prev();
   document.querySelectorAll("#ruler button").forEach(el => el.onclick = () => { world.pause(); world.goto(+el.dataset.i); });

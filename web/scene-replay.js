@@ -86,8 +86,10 @@
     return Number(job.budget) === 1200000 && Number(job.payroll_spent) === 980000;
   }
 
-  if (/github\.io$/.test(location.hostname) || location.protocol === "file:") return;   // static copy: no API
-  fetch(ENDPOINT).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+  // static copy (GitHub Pages): no server, so read the replay recorded in replay.json
+  var RECORDED = /github\.io$/.test(location.hostname);
+  if (location.protocol === "file:") return;
+  fetch(RECORDED ? "replay.json" : ENDPOINT).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
     if (!data || !data.events || !window.HC9 || !window.HC9.STEPS) return;
     var steps = window.HC9.STEPS;
     var job = data.job || {};
@@ -99,8 +101,8 @@
     var hits = annotate(steps, data.events);
     var sol = data.solvency || {};
     var ok = (data.attacks || []).filter(function (a) { return a.ok; }).length;
-    badge("real replay · " + hits + "/" + steps.length + " steps on the ledger · " + ok + "/" +
+    badge((RECORDED ? "recorded replay · " : "real replay · ") + hits + "/" + steps.length + " steps on the ledger · " + ok + "/" +
       (data.attacks || []).length + " attacks refused · " + (sol.balanced ? "balanced: true" : "C-I1 VIOLATED"), false);
-    window.HC9_REAL = data;
+    window.HC9_REAL = data; window.HC9_RECORDED = RECORDED;
   }).catch(function () { /* offline: built-in scenario, no badge */ });
 })();

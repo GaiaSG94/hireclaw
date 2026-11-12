@@ -10,22 +10,22 @@
     {
       id: "individual", label: "Individual",
       title: "What do real people think?",
-      who: "Camille · opening a bakery in March",
-      need: "Five names for the shop. Fifty strangers pick one and say why — a real opinion, not an AI's guess, without hiring a survey firm",
+      who: "Camille · applying for her first job",
+      need: "Five versions of the first line of her cover letter. Fifty strangers pick the one that makes them read on, and say why — a real opinion, not an AI's guess",
       budget: "5 USDC", tasks: "250 votes", workers: 5
     },
     {
       id: "sme", label: "Small business",
-      title: "A human signs off every AI reply",
-      who: "A 12-person insurance broker",
-      need: "Before an AI-written answer reaches a customer, a person approves or corrects it. The business stays accountable for what it sends",
-      budget: "300 USDC / month", tasks: "3,000 replies", workers: 18
+      title: "Do customers understand our offer?",
+      who: "A 12-person heating company",
+      need: "A new quote template. A hundred strangers read it and say what they would pay and what is unclear — the test only real readers can run, before it goes to customers",
+      budget: "20 USDC", tasks: "600 readings", workers: 18
     },
     {
       id: "lab", label: "AI lab",
-      title: "Human taste to train the model",
+      title: "Reinforcement learning on design, from human feedback",
       who: "A foundation-model lab · design",
-      need: "Rank pairs of mock-ups — modern, beautiful, dated — with a reason. Human preference is the data; a model cannot produce it for itself",
+      need: "Humans compare pairs of generated designs — modern, beautiful, dated — and say why. Their preferences are the reward signal that trains the model",
       budget: "250,000 USDC / month", tasks: "1.2M comparisons", workers: 36
     }
   ];

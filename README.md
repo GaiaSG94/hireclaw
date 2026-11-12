@@ -42,8 +42,10 @@ pip install -e ".[dev]"
 
 `make demo`, `make attack`, `make test` and `make web` are shortcuts for steps 1–4.
 
-A static copy of the scene (step 4, without the live ledger annotations) is
-published at <https://gaiasg94.github.io/hireclaw/web/scene.html>.
+**No install:** the scene of step 4 is online at <https://gaiasg94.github.io/hireclaw/>.
+It is a static page: its terminal prints the ledger of a recorded run
+(`web/replay.json`, regenerate with `make replay-snapshot`) instead of calling the API.
+Steps 5 and 6 need the Python server.
 
 ## What is real today, and what is not
 

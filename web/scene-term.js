@@ -46,7 +46,7 @@
     say('<b>' + esc(head) + '</b>  <u>' + esc(step.code.split(" · ")[0]) + "</u>", "h", 160);
     var evs = realEvents(step);
     if (evs.length) {
-      document.getElementById("termSrc").textContent = "real ledger · /api/replay";
+      document.getElementById("termSrc").textContent = window.HC9_RECORDED ? "real ledger · recorded" : "real ledger · /api/replay";
       evs.forEach(function (e) {
         var who = /^(alice|bob|chloe|dora|eli)$/.test(e.who || "") ? e.who : "";
         var bits = ["#" + pad(e.seq, 3), pad(e.kind, 8)]; if (who) bits.push(pad(who, 6));
