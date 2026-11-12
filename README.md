@@ -16,8 +16,8 @@ pip install -e .
 
 make demo     # l'histoire complète, hors ligne, < 2 min, « INVARIANTS OK »
 make attack   # chaque refus du contrat, avec son code
-make test     # 24 tests
-make web      # http://127.0.0.1:8137/work
+make test     # 47 tests
+make web      # http://127.0.0.1:8137/scene (le scénario en 15 étapes) puis /work
 ```
 
 Aucun secret, aucun réseau : la démo est déterministe (graine fixe), les clés
@@ -116,7 +116,7 @@ livrée est immédiatement remplacée par la suivante.
 Le smart contract de production est écrit en Rust avec `near-sdk` v5 dans `contract/` :
 
 ```sh
-make test-contract   # 11 tests unitaires VMContextBuilder (attaques et règles)
+make test-contract  # 22 tests unitaires VMContextBuilder (attaques et règles)
 make build-contract  # build WASM optimisé + ABI (target/near/hireclaw_contract.wasm, 244.4 Ko)
 make test-sandbox   # test d'intégration sur sandbox NEAR réel (cycle complet)
 ```

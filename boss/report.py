@@ -50,6 +50,17 @@ def _git(*args: str) -> str:
         return ""
 
 
+def _fired_names(world) -> list[str]:
+    """Les renvois réellement inscrits au registre.
+
+    `agent.manage()` renvoie une liste vide une fois `world.run()` terminé : le
+    renvoi a déjà eu lieu pendant la boucle. La source de vérité est le registre.
+    """
+    names = {r.key.account: r.name for r in world.robots}
+    return [names.get(e["detail"], e["detail"][:8])
+            for e in world.contract.get_ledger(limit=10_000, kind="fire")]
+
+
 # ----------------------------------------------------------------------- démo
 def demo_report() -> dict:
     return _cached("demo", 300, _demo_report)
@@ -59,7 +70,7 @@ def _demo_report() -> dict:
     started = time.time()
     world = World.create()
     world.run()
-    fired = world.agent.manage()
+    fired = _fired_names(world)
     attacks = attack.suite(world)
     result = world.deliver()
     good, total = world.accuracy(result)
@@ -104,6 +115,95 @@ def _demo_report() -> dict:
         "steps": world.steps,
     }
     return report
+
+
+# ---------------------------------------------------------------------- rejeu
+# Correspondance kind du registre -> fx du front (HANDOFF-CLAUDE.md) et etape du
+# rail (0 commande, 1 marge, 2 embauche, 3 controles, 4 majorite, 5 paie,
+# 6 refus, 7 renvoi, 8 livraison).
+KIND_FX = {"order": "order", "accept": "margin", "hire": "hire", "payroll": "pay",
+           "fire": "fire", "sale": "deliver", "margin": "split", "claim": "pay",
+           "cost": "margin"}
+KIND_STAGE = {"order": 0, "accept": 1, "hire": 2, "payroll": 5, "reject": 6,
+              "fire": 7, "sale": 8, "margin": 8, "claim": 5, "cost": 1,
+              "pause": 7, "resume": 7, "decision": 4, "payout": 8, "paid": 8,
+              "payout_failed": 8, "sweep": 8, "hire_note": 2, "set_agent_key": 2}
+
+
+def _event_fx(kind: str, reason: str) -> str | None:
+    """kind -> fx du front. Les refus se distinguent par leur motif."""
+    if kind == "reject":
+        if "too_fast" in (reason or ""):
+            return "fast"
+        if "minority" in (reason or ""):
+            return "minority"
+        return None
+    return KIND_FX.get(kind)
+
+
+def _replay_events(contract, names: dict) -> list[dict]:
+    """Le registre integral, annote : etape du rail, fx, nom du robot concerne.
+
+    Les cles Ed25519 sont regenerees a chaque run : on traduit les comptes en
+    noms de robots pour que l'interface reste lisible d'un appel a l'autre.
+    """
+    events = []
+    prefix = {account[:8]: name for account, name in names.items()}
+    for entry in contract.get_ledger(limit=10_000):
+        kind = entry["kind"]
+        account = entry["detail"].split(" / ")[-1] if kind == "reject" else entry["detail"]
+        who = (names.get(account) or prefix.get(account)
+               or names.get(entry["actor"]) or prefix.get(entry["actor"])
+               or entry["actor"][:8])
+        events.append({
+            **entry,
+            "stage": KIND_STAGE.get(kind, 4),
+            "fx": _event_fx(kind, entry["reason"]),
+            "who": who,
+        })
+    return events
+
+
+def replay_report() -> dict:
+    """Le rejeu deterministe complet : registre annote (stage + fx), attaques,
+    solvabilite, livraison, invariants. Source de /api/replay."""
+    return _cached("replay", 300, _replay_report)
+
+
+def _replay_report() -> dict:
+    world = World.create()
+    world.run()
+    attacks = attack.suite(world)
+    result = world.deliver()
+    good, total = world.accuracy(result)
+    job = world.contract.jobs[world.job_id]
+    problems = world.contract.check_invariants()
+    names = {r.key.account: r.name for r in world.robots}
+    events = _replay_events(world.contract, names)
+    solvency = world.contract.get_solvency()
+    solvency["balanced"] = solvency["balance"] == solvency["sum"]
+    fired = _fired_names(world)
+    return {
+        "job": {
+            "id": job.id, "budget": job.budget, "margin_reserved": job.margin_reserved,
+            "payroll_budget": job.payroll_budget, "payroll_spent": job.payroll_spent,
+            "inference_spent": job.inference_spent, "n_items": job.n_items,
+            "pay_per_task": job.pay_per_task, "state": job.state,
+        },
+        "events": events,
+        "crew": [{"name": r.name, "profile": r.profile, "accuracy": int(r.accuracy * 100),
+                  "account": r.key.account} for r in world.robots],
+        "fired": fired,
+        "attacks": attacks,
+        "delivery": {
+            "correct": good, "total": total, "result_hash": job.result_hash,
+            "cost_per_label": job.payroll_spent // max(1, total),
+            "buckets": world.contract.buckets.to_dict(),
+        },
+        "solvency": solvency,
+        "invariants": problems or ["OK"],
+        "steps": world.steps,
+    }
 
 
 # -------------------------------------------------------------------- testnet
@@ -175,8 +275,8 @@ def _code_report() -> dict:
             "branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
         },
         "tests": {
-            "python": 24,
-            "rust_unit": 11,
+            "python": 47,
+            "rust_unit": 22,
             "rust_sandbox": 1,
             "attacks": 11,
         },

@@ -1,0 +1,152 @@
+/* Hireclaw v9 — blanc, encre, filets d'un pixel. Aucune police distante (hors ligne). */
+:root {
+  --paper: #fff; --ink: #0a0a0b; --mut: #6e6e73; --dim: #a1a1a6; --line: rgba(10,10,11,.1); --acc: #0a0a0b;
+  --f-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; --f-display: var(--f-ui); --f-mono: Consolas, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--f-ui); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+code { font-family: var(--f-mono); }
+#space { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+
+/* ---------------------------------------------------------------- barre */
+.bar { position: fixed; z-index: 20; top: 0; left: 0; right: 0; height: 64px; padding: 0 24px; display: flex; align-items: center; gap: 28px; pointer-events: none; }
+.bar > * { pointer-events: auto; }
+.brand { display: flex; align-items: center; gap: 3px; text-decoration: none; color: var(--ink); }
+.brand i { width: 3px; height: 16px; background: var(--ink); transform: skewX(-18deg); }
+.brand i:nth-child(2) { height: 12px; align-self: flex-end; margin-bottom: 2px; }
+.brand i:nth-child(3) { height: 8px; align-self: flex-end; margin-bottom: 2px; }
+.brand b { font-weight: 650; font-size: 16px; letter-spacing: -.02em; margin-left: 8px; }
+.brand em { font-style: normal; font-size: 12.5px; color: var(--dim); margin-left: 10px; white-space: nowrap; }
+.ctls { display: flex; gap: 20px; margin: 0 auto; }
+.ctl { display: flex; align-items: center; gap: 8px; }
+.ctl > span { font-size: 12.5px; color: var(--dim); white-space: nowrap; }
+.seg { display: flex; padding: 2px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.8); backdrop-filter: blur(8px); }
+.seg button { font-size: 12.5px; padding: 5px 11px; border-radius: 999px; color: var(--mut); transition: color .15s, background .15s; white-space: nowrap; }
+.seg button:hover { color: var(--ink); }
+.seg button.on { background: var(--ink); color: var(--paper); }
+.acts { display: flex; align-items: center; gap: 8px; }
+.ghost { font-size: 13px; padding: 9px 14px; border-radius: 999px; color: var(--mut); white-space: nowrap; }
+.ghost:hover { color: var(--ink); background: rgba(10,10,11,.05); }
+.run { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; letter-spacing: -.005em; padding: 11px 20px 11px 17px; border-radius: 999px; background: var(--ink); color: var(--paper); white-space: nowrap; transition: transform .15s; box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 6px 20px -8px rgba(10,10,11,.5); }
+.run:hover { transform: translateY(-1px); }
+.run.playing svg path { d: path("M1 0h3v10H1zM6 0h3v10H6z"); }
+.idle .run { animation: call 2.4s ease-in-out infinite; }
+@keyframes call { 50% { box-shadow: 0 0 0 7px rgba(10,10,11,.07), 0 6px 20px -8px rgba(10,10,11,.5); } }
+
+/* ------------------------------------------------- explication : légende */
+.caption { position: fixed; z-index: 10; left: 32px; bottom: 64px; max-width: min(520px, 46vw); pointer-events: none; }
+.caption .who { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--mut); margin-bottom: 12px; }
+.caption .who b { font-weight: 550; color: var(--ink); padding: 3px 10px; border: 1px solid var(--ink); border-radius: 999px; }
+.caption .who i { font-style: normal; }
+.caption .who span { margin-left: 6px; color: var(--dim); }
+.caption .who span::before { content: "· "; }
+.caption h1 { font-family: var(--f-display); font-weight: 620; font-size: clamp(28px, 3.3vw, 46px); line-height: 1.04; letter-spacing: -.035em; margin: 0 0 12px; text-wrap: balance; }
+.caption p { font-size: 15.5px; line-height: 1.5; color: var(--mut); margin: 0 0 12px; max-width: 46ch; text-wrap: pretty; }
+.caption code { font-size: 12px; color: var(--ink); }
+.caption code:not(:empty) { padding: 4px 9px; border-radius: 6px; background: rgba(10,10,11,.055); }
+.caption.in h1, .caption.in p, .caption.in .who, .caption.in code { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+.caption.in p { animation-delay: .06s; } .caption.in code { animation-delay: .1s; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+.x-timeline .caption { display: none; }
+.x-timeline.idle .caption { display: block; }
+.x-caption .caption { left: 50%; transform: translateX(-50%); text-align: center; max-width: min(860px, 86vw); bottom: 118px; }
+.x-caption .caption .who { justify-content: center; }
+.x-caption .caption p { margin-inline: auto; max-width: 60ch; }
+.x-caption .caption h1 { font-size: clamp(34px, 4.6vw, 64px); }
+.t-serif .caption h1 { font-weight: 400; letter-spacing: -.02em; }
+.t-thin .caption h1 { font-weight: 300; letter-spacing: -.045em; }
+.t-mono .caption h1 { font-weight: 500; font-size: 20px; letter-spacing: -.02em; line-height: 1.25; }
+.t-mono .caption p { font-size: 12.5px; }
+.x-inscene .caption.float { left: 0; top: 0; bottom: auto; width: 300px; padding: 16px 18px; background: rgba(255,255,255,.94); border: 1px solid var(--ink); border-radius: 14px; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+.x-inscene .caption.float h1 { font-size: 20px; letter-spacing: -.02em; line-height: 1.2; margin-bottom: 8px; }
+.x-inscene .caption.float p { font-size: 13.5px; margin-bottom: 10px; }
+.x-inscene .caption.float .who { margin-bottom: 10px; font-size: 12px; } .x-inscene .caption.float .who span { display: none; }
+
+/* --------------------------------------------- explication : les 15 étapes */
+.timeline { display: none; position: fixed; z-index: 10; left: 24px; top: 84px; bottom: 56px; width: 318px; margin: 0; padding: 0 8px 0 0; list-style: none; overflow-y: auto; scrollbar-width: none; }
+.x-timeline .timeline { display: block; } .x-timeline.idle .timeline { opacity: .0; pointer-events: none; }
+.timeline li { display: flex; gap: 14px; padding: 7px 0 7px 14px; border-left: 1px solid var(--line); cursor: pointer; color: var(--dim); transition: color .2s; }
+.timeline .n { font-family: var(--f-mono); font-size: 11px; padding-top: 3px; }
+.timeline b { font-weight: 500; font-size: 14px; letter-spacing: -.005em; }
+.timeline p, .timeline code { display: none; }
+.timeline li:hover { color: var(--ink); }
+.timeline li.done { color: var(--mut); border-left-color: var(--ink); }
+.timeline li.on { color: var(--ink); border-left: 2px solid var(--ink); padding: 12px 0 14px 13px; }
+.timeline li.on b { font-family: var(--f-display); font-size: 21px; font-weight: 620; letter-spacing: -.025em; line-height: 1.15; display: block; }
+.timeline li.on p { display: block; font-size: 13.5px; line-height: 1.5; color: var(--mut); margin: 7px 0 9px; }
+.timeline li.on code { display: inline-block; font-size: 11.5px; padding: 3px 8px; border-radius: 6px; background: rgba(10,10,11,.055); }
+
+.ruler { position: fixed; z-index: 10; left: 32px; right: 32px; bottom: 16px; display: flex; gap: 4px; }
+
+.ruler button { flex: 1; height: 14px; position: relative; }
+.ruler button::after { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 2px; border-radius: 2px; background: var(--line); transition: background .3s; }
+.ruler button.done::after { background: var(--ink); } .ruler button.on::after { background: var(--ink); height: 4px; top: 5px; }
+.ruler button:hover::after { background: var(--mut); }
+.nav { position: fixed; z-index: 10; right: 28px; top: 108px; display: flex; align-items: center; gap: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--mut); }
+.nav button { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 50%; font-size: 15px; background: rgba(255,255,255,.8); }
+.nav button:hover { border-color: var(--ink); }
+.idle .nav { opacity: .0; pointer-events: none; }
+
+/* ------------------------------------------------------------- l'argent */
+.money { position: fixed; z-index: 10; right: 28px; bottom: 52px; display: flex; align-items: flex-end; gap: 22px; font-size: 12px; transition: opacity .4s; }
+.idle .money { opacity: 0; }
+.mrow { display: flex; flex-direction: column-reverse; gap: 1px; color: var(--mut); white-space: nowrap; }
+.mrow b { font-family: var(--f-display); font-weight: 600; font-size: 19px; letter-spacing: -.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.mrow.big b { font-size: 40px; line-height: .95; letter-spacing: -.045em; color: var(--acc); }
+.mrow b.ok { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0; background: var(--ink); color: var(--paper); padding: 4px 9px; border-radius: 999px; margin-bottom: 2px; }
+.mbar { position: absolute; left: 0; right: 0; bottom: -14px; height: 5px; border: 1px solid var(--ink); border-radius: 3px; display: flex; justify-content: space-between; overflow: hidden; opacity: .25; transition: opacity .4s; }
+.mbar.full { opacity: 1; background: var(--acc); }
+.mbar i { display: block; background: var(--paper); border-right: 1px solid var(--ink); width: 0; transition: width 1.2s cubic-bezier(.2,.8,.2,1); }
+.mbar u { display: block; width: 0; background: repeating-linear-gradient(135deg, var(--paper) 0 2px, transparent 2px 4px); transition: width .8s; }
+.legend { position: fixed; right: 28px; top: 76px; display: flex; gap: 16px; color: var(--mut); font-size: 12px; }
+.idle .legend { opacity: 0; }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; font-style: normal; line-height: 9px; }
+.l-usdc { background: var(--acc); } .l-data { border: 1.3px solid var(--ink); } .l-ref { border-radius: 0 !important; font-weight: 700; color: var(--ink); font-size: 13px; }
+.l-gold { border-radius: 0 !important; border: 1.2px solid var(--ink); transform: rotate(45deg) scale(.8); }
+
+#tip { position: fixed; z-index: 30; pointer-events: none; opacity: 0; transition: opacity .15s; width: 250px; padding: 12px 14px; background: var(--ink); color: var(--paper); border-radius: 12px; font-size: 12.5px; }
+#tip b { font-size: 14px; font-weight: 600; } #tip p { margin: 4px 0 8px; line-height: 1.45; opacity: .72; } #tip code { font-size: 11px; opacity: .9; }
+
+/* ----------------------------------------------------- tout le projet */
+.sheet { position: fixed; inset: 0; z-index: 50; background: rgba(255,255,255,.97); opacity: 0; pointer-events: none; transition: opacity .3s; overflow-y: auto; }
+.sheet.on { opacity: 1; pointer-events: auto; }
+.sheet-in { max-width: 1280px; margin: 0 auto; padding: 28px 32px 48px; position: relative; }
+.sheet .ghost { position: absolute; right: 24px; top: 22px; border: 1px solid var(--line); }
+.sheet h2 { font-family: var(--f-display); font-size: 30px; font-weight: 620; letter-spacing: -.035em; margin: 0 0 22px; }
+.bench { display: grid; grid-template-columns: repeat(8, 1fr); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
+.bench div { padding: 14px 12px 14px 0; }
+.bench strong { display: block; font-family: var(--f-display); font-size: 27px; font-weight: 620; letter-spacing: -.04em; }
+.bench em { font-style: normal; font-size: 12px; font-weight: 400; color: var(--mut); letter-spacing: 0; }
+.bench span { font-size: 12px; color: var(--mut); }
+.feat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 24px; }
+.feat h3, .rt { font-size: 14px; font-weight: 600; margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); display: flex; justify-content: space-between; text-transform: capitalize; }
+.rt { text-transform: none; margin-top: 26px; }
+.feat h3 em, .rt em { font-style: normal; font-weight: 400; color: var(--dim); }
+.feat p, .refus p { display: flex; justify-content: space-between; gap: 10px; margin: 0; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--mut); }
+.feat code, .refus code { font-size: 11px; color: var(--ink); white-space: nowrap; }
+.refus { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 28px; }
+.refus p { justify-content: flex-start; flex-direction: column; gap: 1px; }
+.net { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 22px; font-family: var(--f-mono); font-size: 11px; color: var(--dim); }
+.net b { font-weight: 400; color: var(--ink); }
+
+/* ------------------------------------------------------- petits écrans */
+@media (max-width: 1180px) { .ctl > span { display: none; } .ctls { gap: 8px; } .brand em { display: none; } .bar { gap: 14px; padding: 0 16px; } }
+@media (max-width: 900px) {
+  .bar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px 10px; } .ctls { order: 3; width: 100%; margin: 0; overflow-x: auto; scrollbar-width: none; } .acts { margin-left: auto; }
+  .seg button { padding: 5px 9px; font-size: 12px; } .ghost { padding: 8px 10px; } .run { padding: 9px 15px 9px 13px; font-size: 13px; }
+  .timeline { display: none !important; } .x-timeline .caption { display: block; } .x-timeline .ruler { left: 16px; }
+  .caption, .x-caption .caption { left: 16px; right: 16px; bottom: 104px; max-width: none; transform: none; text-align: left; } .x-caption .caption .who { justify-content: flex-start; } .x-caption .caption p { margin-inline: 0; }
+  .caption h1, .x-caption .caption h1 { font-size: 25px; } .caption p { font-size: 13.5px; }
+  .money { right: 14px; left: 14px; bottom: 44px; gap: 14px; justify-content: space-between; } .mrow.big b { font-size: 22px; } .mrow b { font-size: 14px; } .mrow span { font-size: 10px; white-space: normal; } .legend { display: none; }
+  .ruler { left: 16px; right: 16px; bottom: 20px; } .nav { right: 14px; top: 112px; }
+  .bench { grid-template-columns: repeat(2, 1fr); } .feat, .refus { grid-template-columns: 1fr; }
+}
+/* --------------------------------------------- vignette dans la galerie */
+.embed .bar, .embed .money, .embed .nav, .embed .timeline, .embed #tip { display: none !important; }
+.embed .caption { display: block !important; left: 40px; right: auto; bottom: 60px; transform: none !important; text-align: left; position: fixed; width: auto; border: 0 !important; padding: 0 !important; background: none !important; max-width: 60vw; }
+.embed .caption h1 { font-size: 44px !important; } .embed .caption p { font-size: 20px; max-width: 40ch; margin: 0; } .embed .caption code { display: none; } .embed .caption .who { font-size: 17px; justify-content: flex-start; }
+.embed .ruler { left: 40px; right: 40px; }
+@media (prefers-reduced-motion: reduce) { .caption.in * { animation: none !important; } .idle .run { animation: none; } }

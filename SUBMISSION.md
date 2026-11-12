@@ -210,7 +210,7 @@ solvabilité, sans aucun secret.
 
 | Suite | Volume | Ce qu'elle prouve |
 |---|---|---|
-| Python (`make test`) | 36 tests | règles du contrat simulé, moteur de qualité, contrôles cachés, bon de travail signé (C-F14) |
+| Python (`make test`) | 47 tests | règles du contrat simulé, moteur de qualité, contrôles cachés, bon de travail signé (C-F14) |
 | Rust unitaires (`make test-contract`) | 22 tests (`VMContextBuilder`) | bornes de paie, plafonds, refus, renvoi justifié, double règlement |
 | Intégration (`make test-sandbox`) | 1 test sur sandbox NEAR réel | cycle complet, solvabilité `balanced: true` |
 
@@ -349,7 +349,7 @@ python3 -m venv .venv && . .venv/bin/activate && pip install -e .
 
 make demo          # l'histoire complète hors ligne, déterministe, « INVARIANTS OK »
 make attack        # les 11 attaques, refusées avec leur code exact
-make test          # 44 tests Python
+make test          # 47 tests Python
 make test-contract # 22 tests unitaires Rust (VMContextBuilder)
 make testnet-e2e   # cycle complet on-chain sur NEAR testnet (rejouable)
 ```

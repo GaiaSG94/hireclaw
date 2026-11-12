@@ -16,6 +16,7 @@ from .money import fmt, usdc
 from .world import World
 
 WEB = Path(__file__).resolve().parent.parent / "web"
+SCENE_JS = ("/v7-data.js", "/v9-engine.js", "/v9-ui.js", "/scene-replay.js")
 PAGE_TTL_S = 0.25
 
 
@@ -215,6 +216,12 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/media/demo.mp4":
             return self._file("../media/demo.mp4", "video/mp4")
+        if parsed.path in ("/scene", "/scene.html"):
+            return self._file("scene.html", "text/html; charset=utf-8")
+        if parsed.path in SCENE_JS:
+            return self._file(parsed.path.lstrip("/"), "text/javascript; charset=utf-8")
+        if parsed.path == "/v9.css":
+            return self._file("v9.css", "text/css; charset=utf-8")
         if parsed.path in ("/", "/work", "/boss", "/ledger", "/demo", "/testnet", "/code", "/video"):
             return self._file("index.html", "text/html; charset=utf-8")
         if parsed.path in ("/app.js", "/views.js"):
@@ -229,6 +236,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(card or {"empty": True})
         if parsed.path == "/api/chain":
             return self._json(chain.chain_state())
+        if parsed.path == "/api/replay":
+            return self._json(report.replay_report())
         if parsed.path == "/api/testnet":
             return self._json(report.testnet_report())
         if parsed.path == "/api/demo":
