@@ -1,4 +1,4 @@
-"""Les attaques attendues : chaque refus du contrat, avec son code exact."""
+"""The expected attacks: every contract refusal, with its exact code."""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -15,14 +15,14 @@ from .world import CONFIG, Clock, World
 def expect(label: str, code: str, action: Callable[[], None]) -> dict:
     try:
         action()
-        actual = "AUCUNE ERREUR"
+        actual = "NO ERROR"
     except PatronError as exc:
         actual = exc.code
     return {"label": label, "expected": code, "actual": actual, "ok": actual == code}
 
 
 def mini(**overrides) -> tuple[Contract, str, list[Key], Clock]:
-    """Un contrat minimal : une commande acceptée, trois travailleurs embauchés."""
+    """A minimal contract: one accepted order, three hired workers."""
     rules = replace(Rules.load(CONFIG), **overrides)
     clock = Clock()
     contract = Contract(rules, "owner", "boss", clock=clock.now)
@@ -37,26 +37,26 @@ def mini(**overrides) -> tuple[Contract, str, list[Key], Clock]:
 
 
 def suite(world: World) -> list[dict]:
-    """Les sept refus du cahier des charges, joués sur le monde de la démo."""
+    """The seven refusals from the spec, played against the demo world."""
     contract, job = world.contract, world.job_id
     settled = sorted(contract.settled)
     task_id, worker = (settled[0][1], settled[0][2]) if settled else ("x", "y")
     fired = next((a for a, w in contract.workers.items() if w.status == "Fired"), worker)
     results = [
-        expect("payer 1,00 USDC une tâche (plafond)", "ERR_PAY_ABOVE_MAX",
+        expect("pay 1.00 USDC for one task (ceiling)", "ERR_PAY_ABOVE_MAX",
                lambda: contract.pay_batch(job, [(f"px-{i}", worker) for i in range(1)], amount=usdc(1))),
-        expect("payer 0,001 USDC une tâche (plancher)", "ERR_PAY_BELOW_MIN",
+        expect("pay 0.001 USDC for one task (floor)", "ERR_PAY_BELOW_MIN",
                lambda: contract.pay_batch(job, [("px-min", worker)], amount=usdc("0.001"))),
-        expect("payer deux fois la même tâche", "ERR_ALREADY_SETTLED",
+        expect("pay the same task twice", "ERR_ALREADY_SETTLED",
                lambda: contract.pay_batch(job, [(task_id, worker)])),
-        expect("payer un travailleur renvoyé", "ERR_WORKER_FIRED",
+        expect("pay a fired worker", "ERR_WORKER_FIRED",
                lambda: contract.pay_batch(job, [("px-fired", fired)])),
-        expect("payer un compte non embauché", "ERR_NOT_HIRED",
-               lambda: contract.pay_batch(job, [("px-none", "inconnu.testnet")])),
-        expect("dépasser le budget de paie de la commande", "ERR_PAYROLL_BUDGET",
+        expect("pay an account that was never hired", "ERR_NOT_HIRED",
+               lambda: contract.pay_batch(job, [("px-none", "unknown.testnet")])),
+        expect("exceed the order's payroll budget", "ERR_PAYROLL_BUDGET",
                lambda: contract.pay_batch(job, [(f"px-{i}", worker) for i in range(10)],
                                           amount=usdc("0.10"))),
-        expect("renvoyer un bon travailleur", "ERR_FIRE_NOT_JUSTIFIED",
+        expect("fire a good worker", "ERR_FIRE_NOT_JUSTIFIED",
                lambda: contract.fire(next(a for a, w in contract.workers.items()
                                           if w.status != "Fired" and w.golds >= 5))),
     ]
@@ -71,22 +71,22 @@ def _cap_attacks() -> list[dict]:
     daily, djob, dkeys, _ = mini(payroll_cap_per_day=usdc("0.03"))
     daily.pay_batch(djob, [("b1", dkeys[0].account)])
     return [
-        expect("dépasser le plafond d'un travailleur", "ERR_WORKER_CAP",
+        expect("exceed a worker's daily cap", "ERR_WORKER_CAP",
                lambda: worker_cap.pay_batch(job, [("a2", keys[0].account)])),
-        expect("dépasser le plafond de paie du jour", "ERR_DAILY_CAP",
+        expect("exceed the daily payroll cap", "ERR_DAILY_CAP",
                lambda: daily.pay_batch(djob, [("b2", dkeys[1].account)])),
     ]
 
 
 def _pause_attacks(world: World) -> list[dict]:
     contract, job = world.contract, world.job_id
-    contract.pause("test du coupe-circuit")
+    contract.pause("kill-switch test")
     worker = next(a for a, w in contract.workers.items() if w.status != "Fired")
     results = [
-        expect("payer pendant la pause", "ERR_PAUSED",
+        expect("pay while paused", "ERR_PAUSED",
                lambda: contract.pay_batch(job, [("pp-1", worker)])),
-        expect("embaucher pendant la pause", "ERR_PAUSED",
-               lambda: contract.hire("nouveau.testnet")),
+        expect("hire while paused", "ERR_PAUSED",
+               lambda: contract.hire("newcomer.testnet")),
     ]
     contract.resume()
     return results
@@ -102,12 +102,12 @@ def print_results(results: list[dict]) -> int:
 
 
 def main() -> int:
-    print("Attaques Hireclaw — un refus par ligne, code attendu à droite\n")
+    print("Hireclaw attacks — one refusal per line, returned code on the right\n")
     world = World.create()
     world.run()
     results = suite(world)
     failures = print_results(results)
-    print(f"\n{len(results) - failures}/{len(results)} refus conformes")
+    print(f"\n{len(results) - failures}/{len(results)} attacks refused as expected")
     return 1 if failures else 0
 
 if __name__ == "__main__":

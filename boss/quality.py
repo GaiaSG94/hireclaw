@@ -1,4 +1,4 @@
-"""Moteur de qualité : contrôles cachés, redondance, majorité, ambiguïté, signaux."""
+"""Quality engine: hidden checks, redundancy, majority, ambiguity, signals."""
 from __future__ import annotations
 
 from collections import Counter, defaultdict
@@ -60,7 +60,7 @@ class QualityEngine:
         self.gold_items = [i for i in self.items if i.id in self.gold_ids]
         self.real_items = [i for i in self.items if i.id not in self.gold_ids]
 
-    # ------------------------------------------------------------------ service
+    # ------------------------------------------------------------------ serving
     def serve(self, worker: str, now_ms: int = 0, allow_gold: bool = True) -> Task | None:
         self._n += 1
         task = None
@@ -88,11 +88,11 @@ class QualityEngine:
         return task
 
     def _wants_gold(self, worker: str) -> bool:
-        if self.golds_served[worker] < 2:  # période d'essai : deux contrôles payés
+        if self.golds_served[worker] < 2:  # trial period: two paid hidden checks
             return True
-        if self.signals[worker] >= 2:  # on contrôle davantage celui dont on doute
+        if self.signals[worker] >= 2:  # check more often whoever we doubt
             return True
-        return self._n % 5 == 0  # une tâche sur cinq
+        return self._n % 5 == 0  # one task in five
 
     def _pick_gold(self, worker: str):
         for _ in range(len(self.gold_items)):
@@ -123,11 +123,11 @@ class QualityEngine:
             "item_id": item.id,
             "text": item.text,
             "choices": list(item.choices),
-            "is_gold_hint": None,  # jamais exposé : les contrôles sont cachés
+            "is_gold_hint": None,  # never exposed: checks stay hidden
             "deadline_ms": task.opened_ms + deadline_s * 1000,
         }
 
-    # ------------------------------------------------------------------ réponses
+    # ------------------------------------------------------------------ answers
     def submit(self, worker: str, task_id: str, choice: str, latency_ms: int,
                signature_ok: bool) -> list[Decision]:
         task = self.tasks.get(task_id)
@@ -136,7 +136,7 @@ class QualityEngine:
         if not signature_ok:
             raise PatronError("ERR_BAD_SIGNATURE", worker)
         if choice not in self.by_id[task.item_id].choices:
-            raise PatronError("ERR_BAD_ORDER", f"choix inconnu : {choice}")
+            raise PatronError("ERR_BAD_ORDER", f"unknown choice: {choice}")
         self.choices_seen[worker].append(choice)
         if self._too_fast(worker, latency_ms):
             self.signals[worker] += 1
@@ -179,10 +179,10 @@ class QualityEngine:
             for answer in pending:
                 decisions.append(Decision(answer.task_id, item_id, answer.worker, "pay", "ambiguous"))
                 answer.decided = True
-            self.labels[item_id] = best  # le plus fréquent, marqué ambigu
+            self.labels[item_id] = best  # the most frequent, flagged ambiguous
         return decisions
 
-    # ------------------------------------------------------------------- lecture
+    # ------------------------------------------------------------------- reads
     @property
     def validated(self) -> dict[str, str]:
         return dict(sorted(self.labels.items()))

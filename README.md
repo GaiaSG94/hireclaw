@@ -1,165 +1,197 @@
-# Hireclaw — l'agent-patron
+# Hireclaw — an AI that hires humans
 
-Une IA qui embauche des humains. Elle reçoit une commande (étiqueter N avis), la
-découpe en micro-tâches, embauche quiconque a une paire de clés, contrôle la
-qualité, paie chaque tâche validée en quelques secondes, livre le résultat et
-garde une marge. **Le code du travail est écrit dans le contrat** : salaire
-plancher, plafond, délais, motifs de refus publics, plafonds journaliers.
+Built for **NEAR HACKATHON** (November 2026). Tracks: Autonomous Business,
+Real-World Money, Agent Economy.
 
-Spécification : `C-agent-patron.md` (cahier des charges du hackathon NEAR).
+**The product.** An AI agent takes a paid order (label N product reviews), splits
+it into micro-tasks, hires anyone who has a key pair, checks the quality, pays
+every validated task in USDC within seconds, delivers the result and keeps a
+margin.
 
-## Démarrage
+**The problem.** When the boss is software, who protects the worker? Platforms
+answer with terms of service. Hireclaw puts the **labor rules inside a NEAR
+smart contract**: pay floor, pay cap, daily caps, a margin set aside before any
+work, public reasons for every rejection, dismissal only when counters justify
+it. The agent gives orders; the contract holds the money and refuses any order
+that breaks a rule. The agent cannot touch the funds.
+
+**How NEAR fits in.** The contract (`contract/`, Rust, `near-sdk` v5) is deployed
+on NEAR testnet as `hireclaw.defraie.testnet`. Workers are **implicit accounts**:
+a browser-generated Ed25519 key is their account, so there is no wallet, no
+sign-up and no gas on their side. The contract pays their token registration
+(`storage_deposit`) when the agent hires them, and pays them in a NEP-141 token.
+
+## Try it — do X, see Y
+
+Requirements: Python ≥ 3.10. No secret, no network, no wallet needed for steps 1–5.
 
 ```sh
-python3 -m venv .venv && . .venv/bin/activate
-pip install -e .
-
-make demo     # l'histoire complète, hors ligne, < 2 min, « INVARIANTS OK »
-make attack   # chaque refus du contrat, avec son code
-make test     # 47 tests
-make web      # http://127.0.0.1:8137/scene (le scénario en 15 étapes) puis /work
+git clone https://github.com/GaiaSG94/hireclaw && cd hireclaw
+python3 -m venv .venv && . .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
 ```
 
-Aucun secret, aucun réseau : la démo est déterministe (graine fixe), les clés
-Ed25519 sont générées localement, le « jeton USDC » est un solde en micro-USDC
-tenu par le contrat.
+| # | Do | See |
+|---|---|---|
+| 1 | `python -m boss.demo` | The full story, offline and deterministic, in under 2 minutes. It ends with `INVARIANTS OK`: 12/12 items delivered, 0.98 USDC paid out of a 1.20 USDC order, the cheater dismissed. |
+| 2 | `python -m boss.attack` | 11 attempts by the agent to break the rules (overpay, underpay, pay twice, pay a dismissed worker, exceed a cap, dismiss a good worker…). Each one is refused with its exact `ERR_*` code. |
+| 3 | `python -m pytest -q` | `47 passed`. |
+| 4 | `python -m boss.webapp` then open <http://127.0.0.1:8137/scene> and click **Run the scenario** | 15 steps, each naming who acts on whom. Every actor is a glass sphere and money is a liquid: it leaves the client, fills the contract, then the workers. The agent's sphere never holds any. Each step shows the matching entry of the real ledger. |
+| 5 | Open <http://127.0.0.1:8137/work> and answer a task | Your browser creates a key, you are hired, you label a review, and the task is paid (or rejected with a public reason) on the ledger. `/boss` and `/ledger` show it from the other side. |
+| 6 | Open <http://127.0.0.1:8137/testnet> | The deployed contract read live over RPC: rules, solvency, and 14 proof transactions with explorer links. |
 
-## Ce que `make demo` prouve
+`make demo`, `make attack`, `make test` and `make web` are shortcuts for steps 1–4.
 
-1. Le client paie 1,20 USDC d'avance ; le contrat bloque le budget, réserve la
-   marge (0,18) et fixe le budget de paie (1,02).
-2. Cinq robots sont embauchés — l'inscription au jeton est payée par le contrat,
-   le travailleur n'envoie aucune transaction.
-3. Les deux premières tâches de chacun sont des contrôles (essai payé), puis une
-   tâche sur cinq. Redondance 3, majorité dès 2 réponses concordantes, minorité
-   refusée (`minority`), élément ambigu payé (`ambiguous`), réponse en moins de
-   300 ms toujours sur le même bouton refusée (`too_fast`).
-4. Les paiements partent par lots de 10 ; chaque refus est motivé et public.
-5. Le tricheur atteint 5 contrôles à 0 % : le contrat accepte son renvoi. Une
-   tentative de renvoi d'un bon travailleur échoue (`ERR_FIRE_NOT_JUSTIFIED`).
-6. Onze attaques sont refusées avec leur code exact (bornes, double paiement,
-   plafonds, pause, budget de paie).
-7. Livraison : 12/12 éléments corrects face aux réponses de référence, paie
-   versée 0,98 USDC (≤ budget de paie), marge ventilée 60/30/10, conservation
-   vérifiée (`INVARIANTS OK`).
-8. Le coupe-circuit bloque l'embauche (`ERR_PAUSED`).
+A static copy of the scene (step 4, without the live ledger annotations) is
+published at <https://gaiasg94.github.io/hireclaw/web/scene.html>.
+
+## What is real today, and what is not
+
+- **Real, on NEAR testnet.** The contract is deployed and holds real testnet
+  tokens. A full cycle was played on-chain — order of 1.20 USDC, job accepted,
+  3 workers hired, 3 pay batches, a reasoned rejection, a signed work ticket
+  claimed, delivery, and a withdrawal where the worker actually received
+  0.16 USDC. The 14 transaction hashes are in `testnet-proof.json`. Replay it
+  with `make testnet-e2e` (needs a funded testnet account, see below).
+- **Real, in the website.** A visitor really works: key generated in the
+  browser, answer signed and verified, quality judged against hidden checks and
+  the majority, payment or rejection recorded. When the relay
+  (`scripts/relay.mjs`, which holds the agent's testnet key) is running next to
+  the site, the same task is also paid on-chain and the visitor gets a
+  transaction link and a withdraw button.
+- **Simulated.** Without the relay — the default when you clone the repo — the
+  site runs against `boss/contract.py`, a Python model of the same rules, and
+  payments are entries in a local ledger. The other workers are five scripted
+  robots (three careful, one sloppy, one cheater), so that majorities form.
+- **Not built.** There is no page for a client to post their own order: the
+  site always runs the same 12-review job. The token is a test USDC with open
+  minting, not Circle's USDC. Nothing runs on mainnet. The three "use cases" on
+  `/scene` change the intro text and the network size only; the amounts played
+  are always those of the real 1.20 USDC job.
+
+## The labor rules (`config.yaml`)
+
+| Parameter | Demo value | Enforced by |
+|---|---|---|
+| `task_pay_usdc.min` / `.max` | 0.02 / 0.10 | contract |
+| `payroll_cap_usdc_per_day` | 20 | contract |
+| `worker_cap_usdc_per_day` | 2 | contract |
+| `min_margin_pct` | 15 | contract (set aside on acceptance) |
+| `redundancy` | 3 | agent |
+| `gold_share_pct` | 20 | agent |
+| `min_golds_before_fire` / `fire_below_accuracy_pct` | 5 / 60 | contract |
+| `pay_or_reject_seconds` | 120 | agent |
+| `inference_max_spend_usdc_per_day` | 0.50 | contract (paid out of the margin) |
+| `revenue_split` | 60/30/10 | contract |
+| `kill_switch` | false | owner |
+
+Invariants checked after every run:
+
+- `C-I1` conservation: contract balance = locked payroll + margins + pockets + pending payouts.
+- `C-I2` payroll never exceeds the payroll budget; inference is paid out of the margin.
+- `C-I3` every payment is between floor and cap; a (task, worker) pair is settled once.
+- `C-I4` daily caps, global and per worker.
+- `C-I5` no dismissal without the required counters.
+- `C-I6` the agent only pays hired workers; the worst case stays bounded by the caps.
+
+## The website: 7 pages
+
+| Page | Content |
+|---|---|
+| `/scene` | The scenario in 15 steps, playable, annotated with the real ledger (`GET /api/replay`) |
+| `/work` | The visitor works: Ed25519 key in the browser, signed answer, payment or reasoned rejection |
+| `/boss` | The boss's board: progress, payroll budget, margin, workers, payments, decisions |
+| `/ledger` | The local ledger and a block read live from the testnet contract |
+| `/demo` | The deterministic demo replayed on demand: order, crew, dismissals, 11 refused attacks, delivery, invariants |
+| `/testnet` | The real contract: addresses, on-chain rules, solvency, 14 proof transactions, ABI, WASM hash |
+| `/code` | Repository inventory: files, lines, limits, tests, commit, and this README |
+
+The backend holds no signing key. Visitors' keys stay in their browser, and the
+testnet pages only make RPC reads.
+
+### Hosting it
+
+The site is a single Python process with no database.
+
+```sh
+docker build -t hireclaw . && docker run -p 8137:8137 hireclaw   # http://localhost:8137/scene
+```
+
+`render.yaml` deploys the same image on Render (New → Blueprint → pick this
+repository). Hosted this way the site runs in simulated mode, as described above.
 
 ## Architecture
 
-| Module | Rôle |
+| Module | Role |
 |---|---|
-| `boss/contract.py` | état, budgets, paie bornée, renvois, livraison, registre, invariants |
-| `boss/quality.py` | contrôles cachés, redondance, majorité, ambiguïté, signaux de comportement |
-| `boss/agent.py` | boucle du patron : servir, juger, payer par lots, embaucher, renvoyer, livrer |
-| `boss/robots.py` | client et cinq travailleurs simulés (3 soigneux, 1 brouillon, 1 tricheur) |
-| `boss/world.py` | monde complet, horloge simulée, partagé par la démo et le site |
-| `boss/webapp.py` | `/work`, `/boss`, `/ledger` et l'API de tâches |
-| `boss/attack.py` | la suite d'attaques, code attendu par code |
-| `web/` | page unique : carte de travail, tableau du patron, registre |
+| `contract/` | The production contract in Rust (`near-sdk` v5): escrow, bounded payroll, dismissals, delivery, ledger events |
+| `boss/contract.py` | Python model of the same rules, used by the offline demo and the site |
+| `boss/quality.py` | Hidden checks, redundancy, majority, ambiguity, behaviour signals |
+| `boss/agent.py` | The boss loop: serve, judge, pay in batches, hire, dismiss, deliver |
+| `boss/robots.py` | The client and five simulated workers |
+| `boss/world.py` | The whole world with a simulated clock, shared by the demo and the site |
+| `boss/webapp.py` | The website and its JSON API |
+| `boss/attack.py` | The attack suite, one expected code per attack |
+| `boss/chain.py`, `scripts/relay.mjs` | Optional bridge to testnet: the relay signs with the agent key |
+| `web/` | The pages; `web/v9-*.js` is the scene (canvas 2D, no dependency) |
 
-Montants : entiers en micro-USDC (`0.02` → `20000`), jamais de flottants.
-Fichiers < 500 lignes, fonctions < 50 lignes.
+Amounts are integers in micro-USDC (`0.02` → `20000`), never floats.
+Every file is under 500 lines and every function under 50 lines.
 
-## Le code du travail (`config.yaml`)
-
-| Paramètre | Démo | Appliqué par |
-|---|---|---|
-| `task_pay_usdc.min` / `.max` | 0.02 / 0.10 | contrat |
-| `payroll_cap_usdc_per_day` | 20 | contrat |
-| `worker_cap_usdc_per_day` | 2 | contrat |
-| `min_margin_pct` | 15 | contrat (mise de côté à l'acceptation) |
-| `redundancy` | 3 | agent |
-| `gold_share_pct` | 20 | agent |
-| `min_golds_before_fire` / `fire_below_accuracy_pct` | 5 / 60 | contrat |
-| `pay_or_reject_seconds` | 120 | agent |
-| `inference_max_spend_usdc_per_day` | 0.50 | contrat (payée sur la marge) |
-| `revenue_split` | 60/30/10 | contrat |
-| `kill_switch` | false | propriétaire |
-
-## Invariants vérifiés
-
-- `C-I1` conservation : solde du contrat = paies bloquées + marges + poches + versements en attente.
-- `C-I2` la paie ne dépasse jamais le budget de paie ; l'inférence est payée sur la marge.
-- `C-I3` tout paiement est entre plancher et plafond ; un couple (tâche, travailleur) est réglé une seule fois.
-- `C-I4` plafonds journaliers, global et par travailleur.
-- `C-I5` aucun renvoi sans les compteurs requis.
-- `C-I6` l'agent ne paie que des travailleurs embauchés ; le pire cas reste borné par les plafonds.
-
-## Le site : tout le projet en sept pages
-
-| Page | Contenu |
-|---|---|
-| `/work` | Le visiteur travaille : clé Ed25519 dans le navigateur, réponse signée, **payé on-chain** (lien de transaction), bouton de retrait relayé |
-| `/boss` | Le tableau du patron : avancement, budget de paie, marge, travailleurs, paiements, décisions |
-| `/ledger` | Le registre local **et** un bloc lu en direct du contrat testnet |
-| `/demo` | La démo déterministe rejouée à la demande : commande, équipage, renvois, **11 attaques refusées**, livraison, invariants |
-| `/scene` | La scène 3D : le scénario en 15 étapes, jouable, annoté par le rejeu réel `GET /api/replay` |
-| `/testnet` | Le contrat réel : adresses, règles on-chain, solvabilité lue sur la chaîne, **14 transactions de preuve**, ABI du build courant (31 méthodes), empreinte du WASM |
-| `/code` | L'inventaire du dépôt : fichiers, lignes, limites respectées, tests, commit, et le README intégral |
-
-URL publique (tunnel Cloudflare, `make public-url` pour l'afficher) :
-`/work` est la page d'entrée. Le backend ne détient aucune clé de signature :
-les clés des visiteurs restent dans leur navigateur, et les pages testnet ne font
-que des lectures RPC.
-
-`/work` crée une paire de clés dans le navigateur (WebCrypto Ed25519 ; si le
-navigateur ne le supporte pas, une clé de secours est générée côté serveur et
-l'interface le dit). La réponse est signée, le compte implicite est le
-hexadécimal de la clé publique : aucune inscription, aucune transaction côté
-travailleur. `/boss` montre l'avancement, le budget de paie, les travailleurs et
-le fil des paiements ; `/ledger` publie les règles en vigueur et tout le registre.
-
-Les robots tournent en fond pour que les majorités se forment ; une commande
-livrée est immédiatement remplacée par la suivante.
-
-## Contrat NEAR en Rust (aux normes)
-
-Le smart contract de production est écrit en Rust avec `near-sdk` v5 dans `contract/` :
+## The NEAR contract
 
 ```sh
-make test-contract  # 22 tests unitaires VMContextBuilder (attaques et règles)
-make build-contract  # build WASM optimisé + ABI (target/near/hireclaw_contract.wasm, 244.4 Ko)
-make test-sandbox   # test d'intégration sur sandbox NEAR réel (cycle complet)
+make test-contract    # 22 unit tests (VMContextBuilder): attacks and rules
+make build-contract   # optimised WASM + ABI (target/near/hireclaw_contract.wasm, 244.4 KB)
+make test-sandbox     # integration test on a real NEAR sandbox (full cycle)
 ```
 
-- **Standards respectés** : NEP-141 receiver (`ft_on_transfer`), sortie cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par le contrat à l'embauche pour les comptes implicites, NEP-297 pour les événements (`EVENT_JSON`), NEP-330 metadata, ABI standard NEAR 0.4.0 (31 méthodes dans le dépôt, 30 sur le build testnet déployé).
-- **Règles de code** : 100 % des fichiers < 500 lignes (max 294 l `tests.rs`), 100 % des fonctions < 50 lignes (vérifié par scanner).
-- Documentation détaillée du contrat dans `contract/README.md`.
+NEAR building blocks used:
 
-## Testnet (réel, vérifiable)
+- **Implicit accounts** — a worker's account is the hex of their Ed25519 public key.
+- **NEP-141** — the contract is a token receiver (`ft_on_transfer`) and pays out
+  with a cross-contract `ft_transfer` and an `on_payout` callback.
+- **Storage management** — the contract pays the worker's `storage_deposit` on hiring.
+- **NEP-297** events (`EVENT_JSON`) and **NEP-330** contract metadata.
+- **Standard NEAR ABI** 0.4.0 — 31 methods in this repository.
+- **Sub-accounts** — `hireclaw.`, `agent.hireclaw.` and `client.hireclaw.` under one funded account.
+
+More detail in `contract/README.md`.
+
+## Testnet
 
 ```sh
-make testnet-deploy   # idempotent ; FORCE_REDEPLOY=1 pour reflasher le code
-make testnet-e2e      # cycle complet on-chain, rejouable (job-000N suivant)
-make serve-public     # services systemd + tunnel public
-make public-url       # affiche l'URL publique et l'état des services
+make testnet-deploy   # idempotent; FORCE_REDEPLOY=1 to reflash the code
+make testnet-e2e      # full on-chain cycle, replayable
 ```
 
-- Contrat : `hireclaw.defraie.testnet` — [explorateur](https://testnet.nearblocks.io/address/hireclaw.defraie.testnet)
-- Agent : `agent.hireclaw.defraie.testnet` · client : `client.hireclaw.defraie.testnet`
-- Jeton : `usd.panneau.testnet` (NEP-141, 6 décimales, `mint` ouvert pour le test)
-- Le cycle joué : `mint` → `ft_transfer_call` (commande 1,20 USDC) → `accept_job`
-  (marge 0,18 / paie 1,02) → `hire` × 3 → `pay_batch` × 3 → `reject minority` →
-  `deliver` (marge 60/30/10) → `withdraw` (**0,16 USDC réellement reçus** par la
-  travailleuse) → `get_solvency` : `balanced: true`.
-- Les hachages de transaction sont dans `testnet-proof.json` (public, sans secret).
-- Le faucet public est limité (HTTP 429) : les comptes sont créés comme
-  sous-comptes d'un compte financé, `HIRECLAW_PARENT` / `HIRECLAW_FUNDER` pour changer.
-- Clés : `~/.near-credentials/testnet/`, jamais dans le dépôt.
+- Contract: `hireclaw.defraie.testnet` — [explorer](https://testnet.nearblocks.io/address/hireclaw.defraie.testnet)
+- Agent: `agent.hireclaw.defraie.testnet` · client: `client.hireclaw.defraie.testnet`
+- Token: `usd.panneau.testnet` (NEP-141, 6 decimals, open `mint` for testing)
+- Keys live in `~/.near-credentials/testnet/`, never in the repository.
+- The public faucet is rate-limited, so accounts are created as sub-accounts of a
+  funded account (`HIRECLAW_PARENT` / `HIRECLAW_FUNDER` to change it).
 
-## Limites connues
+## Known limits
 
-- **Décalage dépôt / testnet** : le dépôt compile 31 méthodes ; le build déployé sur
-  `hireclaw.defraie.testnet` en expose 30. La 31ᵉ (`promote`, statut senior) est testée
-  en unitaire et sur sandbox mais attend le prochain redéploiement : le compte contrat
-  n'a plus que 0,05 NEAR libre et un redéploiement exige de couvrir l'ancien et le
-  nouveau code simultanément. Vérifiable : `promote` renvoie `MethodNotFound` on-chain.
+- **Repository vs deployed build.** The repository compiles 31 methods; the build
+  deployed on testnet exposes 30. The 31st (`promote`, senior status) is covered
+  by unit and sandbox tests but waits for the next redeploy: the contract account
+  has too little free NEAR to hold the old and the new code at once. You can
+  check it: `promote` returns `MethodNotFound` on-chain.
+- `claim_unpaid` is implemented and proven on-chain, but without a
+  meta-transaction: the worker sends the transaction or goes through a relay.
+- Senior status exists in the contract and the agent, but the demo is too short
+  to reach it.
+- Photo tasks, dynamic pay and cross-chain cash-out are not implemented.
 
-- `claim_unpaid` est implémenté et prouvé on-chain, mais sans méta-transaction :
-  le travailleur doit envoyer lui-même la transaction (ou passer par un relais).
-- L'engagement sur les contrôles est vérifié par empreinte (`ERR_GOLD_MISMATCH`)
-  dans la démo et sur testnet.
-- Le statut senior existe dans le contrat et l'agent, mais la démo ne dure pas
-  assez longtemps pour l'atteindre.
-- Tâches photo, paie dynamique et encaissement inter-chaînes : non implémentés
-  (V1/MAX).
+## Disclosures
+
+- **Code written with AI assistance.** Large parts of this repository were written
+  with AI coding agents (Claude Code, opencode) under human direction and review.
+- **Dependencies.** Python: `cryptography`, `PyYAML`, `pytest` (dev). Rust:
+  `near-sdk` v5 and the crates in `contract/Cargo.lock`. Node (testnet scripts
+  only): the packages in `scripts/package.json`. The website has no dependency
+  and loads nothing from a CDN.
+- **Timeline.** Every commit is dated within the hackathon window.
+- **Licence.** MIT, see `LICENSE`.

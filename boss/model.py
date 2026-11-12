@@ -1,4 +1,4 @@
-"""État du monde : commandes, travailleurs, registre. Aucune logique métier ici."""
+"""World state: orders, workers, ledger. No business logic here."""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field

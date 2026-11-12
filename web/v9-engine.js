@@ -1,8 +1,7 @@
-/* Hireclaw v9 — moteur de scène. Repart de zéro (rien de v5→v8).
-   Fond blanc, encre noire, sphères de verre. L'argent est un liquide noir :
-   il quitte la sphère du client, remplit celle du contrat, puis celles des travailleurs.
-   L'agent n'en contient jamais — il ne peut pas toucher aux fonds.
-   Zéro dépendance : canvas 2D, projection maison. Données : dépôt réel (v7-data.js). */
+/* Hireclaw — the scene engine (canvas 2D, home-made projection, no dependency).
+   White ground, black ink, glass spheres. Money is a black liquid: it leaves the
+   client's sphere, fills the contract's, then the workers'. The agent's sphere
+   never holds any — it cannot touch the funds. Data: v7-data.js, steps: v9-steps.js. */
 (function () {
   "use strict";
   const TAU = Math.PI * 2;
@@ -53,7 +52,7 @@
       const cols = Math.ceil(n / rows), half = Math.max(3, (cols - 1) / 2 * s + .9), dz = Math.max(1.5, (rows - 1) / 2 * s + .9);
       return { client: V(0, 2.7, 0), contract: V(-1, 0, 0), agent: V(1.4, 0, 0),
         workers: gridXZ(n, 0, -2.7, 0, rows, s), cs: V(1.4, 0, 0), as: V(0, 0, 1.3),
-        planes: [{ y: 2.7, hx: 2.2, hz: 1.5, label: "qui commande" }, { y: 0, hx: 3, hz: 1.5, label: "qui garde l'argent et fixe les règles" }, { y: -2.7, hx: half, hz: dz, label: "qui travaille" }] };
+        planes: [{ y: 2.7, hx: 2.2, hz: 1.5, label: "who orders" }, { y: 0, hx: 3, hz: 1.5, label: "who holds the money and sets the rules" }, { y: -2.7, hx: half, hz: dz, label: "who works" }] };
     },
     orbite(n) {
       return { client: V(-5.6, 0, 0), contract: V(0, 0, 0), agent: V(-.62, 0, 2.35),
@@ -115,7 +114,7 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       fit();
     }
-    /* cadrage automatique : la scène remplit la zone laissée libre par l interface */
+    /* auto-framing: the scene fills the area the interface leaves free */
     function fit() {
       if (!nodes.length) return;
       const small = W < 900, pd = cfg.pad || [84, 56, 150, 56];
@@ -156,12 +155,12 @@
       nodes = []; clients = []; agents = []; workers = [];
       const off = (p, s, i, k) => { const m = k === 1 ? 0 : i - (k - 1) / 2; return V(p.x + s.x * m, p.y + s.y * m, p.z + s.z * m); };
       for (let i = 0; i < nC; i++) clients.push(mk("client", off(L.client, L.cs, i, nC), nC > 1 ? .44 : .56, nC > 1 ? "Client " + (i + 1) : "Client", ROLE_LABEL.client[1]));
-      contract = mk("contract", L.contract, .82, "Contrat", ROLE_LABEL.contract[1]);
-      for (let i = 0; i < nA; i++) agents.push(mk("agent", off(L.agent, L.as, i, nA), nA > 1 ? .5 : .62, nA > 1 ? "Agent " + (i + 1) : "Agent IA", ROLE_LABEL.agent[1]));
-      const rad = wRad(nW), real = ["Alice", "Bob", "Chloé"];
+      contract = mk("contract", L.contract, .82, "Contract", ROLE_LABEL.contract[1]);
+      for (let i = 0; i < nA; i++) agents.push(mk("agent", off(L.agent, L.as, i, nA), nA > 1 ? .5 : .62, nA > 1 ? "Agent " + (i + 1) : "AI agent", ROLE_LABEL.agent[1]));
+      const rad = wRad(nW), real = ["Alice", "Bob", "Chloe"];
       L.workers.forEach((p, i) => {
         const nm = i === nW - 1 ? "Eli" : i === nW - 2 ? "Dora" : i < 3 ? real[i] : (0x3a7 + i * 0x9d).toString(16) + "…" + (0xe1 + i * 7).toString(16).slice(-2);
-        const w = mk("worker", p, rad, nm, "disponible"); w.idx = i; workers.push(w);
+        const w = mk("worker", p, rad, nm, "available"); w.idx = i; workers.push(w);
       });
       fit(); reset();
     }
@@ -170,7 +169,7 @@
       money.garde = 0; money.pay = 0; money.margin = 0; money.inf = 0; money.split = false; money.balanced = false;
       clients.forEach(c => { c.tlv = .86; c.got = false; });
       contract.tlv = 0; contract.locked = false; contract.split = false;
-      workers.forEach(w => { w.status = "idle"; w.sub = "disponible"; w.paid = 0; w.tlv = 0; w.gold = false; w.flag = ""; w.linked = false; });
+      workers.forEach(w => { w.status = "idle"; w.sub = "available"; w.paid = 0; w.tlv = 0; w.gold = false; w.flag = ""; w.linked = false; });
       done = false;
     }
     function payees() { return workers.filter(w => w.status !== "fired" && w.idx !== workers.length - 1); }
@@ -179,14 +178,14 @@
       if (fx === "order") { clients.forEach(c => c.tlv = 0); money.garde = 1.20; contract.tlv = .86; }
       if (fx === "lock") contract.locked = true;
       if (fx === "margin") money.margin = .18;
-      if (fx === "hire") workers.forEach(w => { w.linked = true; w.status = "trial"; w.sub = "embauché"; });
-      if (fx === "trial") workers.forEach(w => { w.sub = "à l'essai"; });
+      if (fx === "hire") workers.forEach(w => { w.linked = true; w.status = "trial"; w.sub = "hired"; });
+      if (fx === "trial") workers.forEach(w => { w.sub = "on trial"; });
       if (fx === "gold") workers.forEach((w, i) => { w.gold = i % 5 === 1 || w === eli; });
-      if (fx === "pay") { money.pay = .48; payees().forEach(w => { w.status = "active"; w.paid = .48 / payees().length; w.sub = "payé " + w.paid.toFixed(2); }); }
+      if (fx === "pay") { money.pay = .48; payees().forEach(w => { w.status = "active"; w.paid = .48 / payees().length; w.sub = "paid " + w.paid.toFixed(2); }); }
       if (fx === "minority" && dora) dora.flag = "minority";
       if (fx === "fast" && eli) eli.flag = "too_fast";
-      if (fx === "fire" && eli) { eli.status = "fired"; eli.sub = "renvoyé"; eli.linked = false; eli.gold = false; }
-      if (fx === "deliver") { money.pay = .98; money.inf = .048; const P = payees(); P.forEach(w => { w.paid = .98 / P.length; w.sub = "payé " + w.paid.toFixed(2); }); clients.forEach(c => c.got = true); }
+      if (fx === "fire" && eli) { eli.status = "fired"; eli.sub = "dismissed"; eli.linked = false; eli.gold = false; }
+      if (fx === "deliver") { money.pay = .98; money.inf = .048; const P = payees(); P.forEach(w => { w.paid = .98 / P.length; w.sub = "paid " + w.paid.toFixed(2); }); clients.forEach(c => c.got = true); }
       if (fx === "split") { money.split = true; contract.split = true; }
       if (fx === "balance") { money.balanced = true; done = true; }
       contract.tlv = money.garde ? .86 * (money.garde - money.pay) / 1.20 : 0;
@@ -283,7 +282,7 @@
       }
     }
 
-    /* ------------------------------------------------- la sphère de verre */
+    /* ---------------------------------------------------- the glass sphere */
     function shadow(n) {
       if (cfg.shadow === false) return;
       const g = proj(V(n.pos.x, n.gy, n.pos.z)), r = n.r * g.s, sq = clamp(Math.abs(Math.sin(cam.pitch)), .1, 1);
@@ -292,7 +291,7 @@
       const R = r * 1.25, gr = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
       gr.addColorStop(0, rgba(.17 * n.alpha)); gr.addColorStop(.55, rgba(.07 * n.alpha)); gr.addColorStop(1, rgba(0));
       ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.fill();
-      const c = ctx.createRadialGradient(r * .12, 0, 0, r * .12, 0, r * .5);   // caustique : la lumière traverse
+      const c = ctx.createRadialGradient(r * .12, 0, 0, r * .12, 0, r * .5);   // caustic: light goes through
       c.addColorStop(0, "rgba(255,255,255," + .85 * n.alpha * (1 - n.lv) + ")"); c.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = c; ctx.beginPath(); ctx.arc(r * .12, 0, r * .5, 0, TAU); ctx.fill();
       ctx.restore();
@@ -302,7 +301,7 @@
       if (r < 1.5) return;
       const fired = n.status === "fired";
       ctx.save(); ctx.globalAlpha = a;
-      // corps : verre légèrement teinté, bord plus dense
+      // body: lightly tinted glass, denser at the rim
       let g = ctx.createRadialGradient(x - r * .22, y - r * .28, r * .05, x, y, r);
       g.addColorStop(0, "rgba(255,255,255,.55)"); g.addColorStop(.5, "rgba(244,244,245,.5)");
       g.addColorStop(.82, rgba(.07)); g.addColorStop(.95, rgba(.16)); g.addColorStop(1, rgba(.34));
@@ -317,29 +316,29 @@
         ctx.fillStyle = cfg.accent ? "rgba(255,255,255,.28)" : "#3a3a3d";
         ctx.beginPath(); ctx.ellipse(x, top, half, Math.max(1, half * .2 * clamp(Math.abs(Math.sin(cam.pitch)) + .25, .3, 1)), 0, 0, TAU); ctx.fill();
       }
-      // lumière réfractée en bas
+      // refracted light at the bottom
       g = ctx.createRadialGradient(x + r * .18, y + r * .62, 0, x + r * .18, y + r * .62, r * .6);
       g.addColorStop(0, "rgba(255,255,255," + (n.lv > .3 ? .16 : .9) + ")"); g.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
       ctx.restore();
-      // cœur selon le rôle
+      // core, by role
       ctx.lineWidth = Math.max(1, r * .035);
       if (n.kind === "agent") {           // machine : un gyroscope, jamais d'argent
         ctx.strokeStyle = INK;
         for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(x, y, r * .56, r * .19, now * .0007 + k * TAU / 3, 0, TAU); ctx.stroke(); }
         ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, y, r * .1, 0, TAU); ctx.fill();
-      } else if (n.kind === "contract") { // coffre : un équateur + un verrou
+      } else if (n.kind === "contract") { // vault: an equator
         ctx.strokeStyle = n.lv > .45 ? "rgba(255,255,255,.5)" : rgba(.3); ctx.lineWidth = 1;
         ctx.beginPath(); ctx.ellipse(x, y, r * .97, r * .97 * clamp(Math.abs(Math.sin(cam.pitch)), .12, .9) * .34, 0, 0, TAU); ctx.stroke();
-        if (n.split && n.lv > .05) {      // marge ventilée 60/30/10
+        if (n.split && n.lv > .05) {      // margin split 60/30/10
           const top = y + r * .93 - 2 * r * .93 * n.lv, bot = y + r * .93;
           ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1.2;
           [.6, .9].forEach(q => { const xx = x - r * .5 + r * q; ctx.beginPath(); ctx.moveTo(xx, top + 2); ctx.lineTo(xx, bot); ctx.stroke(); });
         }
-      } else if (n.kind === "client" && n.got) { // livrable reçu : 12 éléments
+      } else if (n.kind === "client" && n.got) { // deliverable received: 12 items
         ctx.fillStyle = PAPER; ctx.strokeStyle = INK; ctx.lineWidth = 1;
         for (let i = 0; i < 12; i++) { const cx = x + ((i % 4) - 1.5) * r * .24, cy = y + (Math.floor(i / 4) - 1) * r * .24; ctx.beginPath(); ctx.arc(cx, cy, r * .075, 0, TAU); ctx.fill(); ctx.stroke(); }
-      } else if (n.kind === "worker" && n.gold && !fired) { // contrôle caché
+      } else if (n.kind === "worker" && n.gold && !fired) { // hidden check
         ctx.strokeStyle = n.lv > .5 ? "#fff" : INK; ctx.lineWidth = 1.2; const q = r * .2, cy = y - r * .34;
         ctx.beginPath(); ctx.moveTo(x, cy - q); ctx.lineTo(x + q, cy); ctx.lineTo(x, cy + q); ctx.lineTo(x - q, cy); ctx.closePath(); ctx.stroke();
       }
@@ -364,7 +363,7 @@
       ctx.globalAlpha = clamp(n.alpha * 1.15, 0, 1); ctx.textAlign = side ? "left" : "center"; ctx.textBaseline = "top";
       ctx.font = "600 " + (big ? 13.5 : 12.5) + "px " + FUI; ctx.fillStyle = INK; ctx.fillText(n.name, x, y);
       if (W > 760 || big) { ctx.font = "400 " + (big ? 12 : 11.5) + "px " + FUI; ctx.fillStyle = rgba(.5);
-        ctx.fillText(n.kind === "contract" && money.garde ? (money.garde - money.pay).toFixed(2) + " USDC en garde" : n.sub, x, y + 17); }
+        ctx.fillText(n.kind === "contract" && money.garde ? (money.garde - money.pay).toFixed(2) + " USDC held" : n.sub, x, y + 17); }
       if (n.flag) { ctx.font = "600 12.5px " + FUI; const nw = ctx.measureText(n.name).width; ctx.font = "500 11px " + FMONO; const pw = ctx.measureText(n.flag).width + 16; pill(side ? x + nw + 10 + pw / 2 : x, side ? y + 8 : y + 44, n.flag, true); }
       ctx.globalAlpha = 1;
     }
@@ -438,7 +437,7 @@
       requestAnimationFrame(frame);
     }
 
-    /* ------------------------------------------------------------ scénario */
+    /* ------------------------------------------------------------ scenario */
     function emit() { if (hooks.onStep) hooks.onStep(stepIdx, STEPS[stepIdx] || null, money, { playing, done, total: STEPS.length }); }
     function goto(i) {
       i = clamp(i, 0, STEPS.length - 1);
@@ -477,10 +476,10 @@
       setRole(r) { role = r; const n = r === "client" ? clients[0] : r === "travailleur" ? workers[0] : null;
         if (n) { cam.tf = V((n.pos.x - base.x) * .55, (n.pos.y - base.y) * .55, (n.pos.z - base.z) * .55); cam.tZoom = 1.35; } else { cam.tf = V(0, 0, 0); cam.tZoom = 1; } },
       info(n) {
-        if (n.kind === "client") return [n.name, "Paie la commande d'avance, reçoit le livrable.", window.HC.USE_CASES[caseIdx].tasks + " · " + window.HC.USE_CASES[caseIdx].budget];
-        if (n.kind === "contract") return ["Contrat NEAR", "Garde l'argent et applique le code du travail. Personne ne peut y déroger.", window.HC.NETWORK.contract];
-        if (n.kind === "agent") return [n.name, "Découpe, embauche, contrôle, ordonne la paie. Ne détient jamais l'argent.", "plancher 0.02 · plafond 0.10 · marge ≥ 15 %"];
-        return [n.name, n.status === "fired" ? "Renvoyé : 5 contrôles cachés, 0 %." : "Humain. Compte = clé publique, aucun wallet.", (n.gold ? "contrôle caché · " : "") + n.paid.toFixed(2) + " USDC" + (n.flag ? " · refus " + n.flag : "")];
+        if (n.kind === "client") return [n.name, "Pays for the order upfront, receives the deliverable.", window.HC.USE_CASES[caseIdx].tasks + " · " + window.HC.USE_CASES[caseIdx].budget];
+        if (n.kind === "contract") return ["NEAR contract", "Holds the money and enforces the labor rules. Nobody can override it.", window.HC.NETWORK.contract];
+        if (n.kind === "agent") return [n.name, "Splits the job, hires, checks, orders the payroll. Never holds the money.", "floor 0.02 · cap 0.10 · margin ≥ 15%"];
+        return [n.name, n.status === "fired" ? "Dismissed: 5 hidden checks, 0%." : "Human. Account = public key, no wallet.", (n.gold ? "hidden check · " : "") + n.paid.toFixed(2) + " USDC" + (n.flag ? " · rejected " + n.flag : "")];
       },
       steps: STEPS, state: () => ({ stepIdx, playing, done, money, nodes: nodes.length })
     };

@@ -1,4 +1,4 @@
-"""Les règles du propriétaire (config.yaml), validées avant tout déploiement."""
+"""The owner's rules (config.yaml), validated before any deployment."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,17 +27,17 @@ class Rules:
 
     def validate(self) -> "Rules":
         if self.task_pay_min <= 0:
-            raise ValueError("task_pay_usdc.min doit être > 0")
+            raise ValueError("task_pay_usdc.min must be > 0")
         if self.task_pay_min > self.task_pay_max:
-            raise ValueError("plancher au-dessus du plafond")
+            raise ValueError("pay floor above pay ceiling")
         if not 0 <= self.min_margin_pct < 100:
-            raise ValueError("min_margin_pct hors [0, 100)")
+            raise ValueError("min_margin_pct outside [0, 100)")
         if self.redundancy < 3:
-            raise ValueError("la majorité demande au moins 3 réponses")
+            raise ValueError("a majority needs at least 3 answers")
         if not 0 <= self.gold_share_pct <= 100:
-            raise ValueError("gold_share_pct hors [0, 100]")
+            raise ValueError("gold_share_pct outside [0, 100]")
         if sum(self.revenue_split) != 100:
-            raise ValueError("revenue_split doit sommer à 100")
+            raise ValueError("revenue_split must sum to 100")
         if self.min_golds_before_fire < 1:
             raise ValueError("min_golds_before_fire >= 1")
         return self

@@ -1,4 +1,4 @@
-"""Le contrat : il borne l'argent et rend tout public. Il ne juge jamais une réponse."""
+"""The contract: it bounds the money and makes everything public. It never judges an answer."""
 from __future__ import annotations
 
 import time
@@ -14,11 +14,11 @@ from .ticket import Ticket, check as ticket_ok
 from .withdrawal import Withdrawal, check as withdrawal_ok
 
 DAY_MS = 86_400_000
-REGISTRATION_FEE_NEAR = 1_250_000_000_000_000_000_000  # 0,00125 N par inscription au jeton
+REGISTRATION_FEE_NEAR = 1_250_000_000_000_000_000_000  # 0.00125 N per token registration
 
 
 class Contract:
-    """Compte de contrat unique : budgets bloqués, paie bornée, registre public."""
+    """Single contract account: locked budgets, bounded payroll, public ledger."""
 
     def __init__(
         self,
@@ -52,7 +52,7 @@ class Contract:
         self.pending_out: dict[str, int] = {}
         self._seq = 0
 
-    # ------------------------------------------------------------------ temps
+    # ------------------------------------------------------------------ time
     def now_ms(self) -> int:
         return self._clock()
 
@@ -66,7 +66,7 @@ class Contract:
             for worker in self.workers.values():
                 worker.earned_today = 0
 
-    # --------------------------------------------------------------- registre
+    # --------------------------------------------------------------- ledger
     def _log(self, kind: str, actor: str, **fields) -> Entry:
         self._seq += 1
         entry = Entry(seq=self._seq, at_ms=self.now_ms(), kind=kind, actor=actor, **fields)
@@ -76,7 +76,7 @@ class Contract:
     def record_decision(self, actor: str, kind: str, reason: str, job: str = "") -> None:
         self._log("decision", actor, job=job, detail=kind, reason=reason)
 
-    # ---------------------------------------------------------------- garde-fous
+    # ---------------------------------------------------------------- guards
     def _require_agent(self, actor: str) -> None:
         if actor != self.agent:
             raise PatronError("ERR_NOT_AGENT", actor)
@@ -97,20 +97,20 @@ class Contract:
             raise PatronError("ERR_NOT_HIRED", account)
         return worker
 
-    # ------------------------------------------------------------------ argent
+    # ------------------------------------------------------------------ money
     def deposit(self, account: str, amount: int) -> None:
-        """Simule le portefeuille hors chaîne du client (USDC déjà possédés)."""
+        """Simulates the client's off-chain wallet (USDC already owned)."""
         if amount <= 0:
-            raise PatronError("ERR_BAD_ORDER", "dépôt <= 0")
+            raise PatronError("ERR_BAD_ORDER", "deposit <= 0")
         self.balances[account] = self.balances.get(account, 0) + amount
 
     def order(self, client: str, amount: int, *, n_items: int, deadline_ms: int, spec_hash: str) -> str:
-        """ft_transfer_call, action `order` : le jeton crédite le contrat, le budget est bloqué."""
+        """ft_transfer_call, `order` action: the token credits the contract, the budget is locked."""
         self._require_active()
         if n_items <= 0 or amount <= 0:
-            raise PatronError("ERR_BAD_ORDER", "n_items ou montant invalide")
+            raise PatronError("ERR_BAD_ORDER", "invalid n_items or amount")
         if deadline_ms <= self.now_ms():
-            raise PatronError("ERR_BAD_ORDER", "échéance déjà passée")
+            raise PatronError("ERR_BAD_ORDER", "deadline already passed")
         if self.balances.get(client, 0) < amount:
             raise PatronError("ERR_INSUFFICIENT", client)
         self.balances[client] -= amount
@@ -125,13 +125,13 @@ class Contract:
             spec_hash=spec_hash,
             created_ms=self.now_ms(),
         )
-        self._log("order", client, job=job_id, amount=amount, detail=f"{n_items} éléments")
+        self._log("order", client, job=job_id, amount=amount, detail=f"{n_items} items")
         return job_id
 
     def ft_on_transfer(self, sender: str, amount: int, msg: dict) -> str:
-        """Point d'entrée NEP-141 : le jeton appelle le contrat."""
+        """NEP-141 entry point: the token calls the contract."""
         if msg.get("action") != "order":
-            raise PatronError("ERR_BAD_ORDER", f"action inconnue : {msg.get('action')}")
+            raise PatronError("ERR_BAD_ORDER", f"unknown action: {msg.get('action')}")
         return self.order(
             sender,
             amount,
@@ -151,9 +151,9 @@ class Contract:
         margin = pct_of(job.budget, self.rules.min_margin_pct)
         payroll = job.budget - margin
         if payroll < pay_per_task:
-            raise PatronError("ERR_PAYROLL_BUDGET", "budget de paie insuffisant pour une tâche")
+            raise PatronError("ERR_PAYROLL_BUDGET", "payroll budget too small for a single task")
         if not gold_commit:
-            raise PatronError("ERR_BAD_ORDER", "engagement sur les contrôles manquant")
+            raise PatronError("ERR_BAD_ORDER", "missing commitment on the hidden checks")
         job.pay_per_task = pay_per_task
         job.margin_reserved = margin
         job.payroll_budget = payroll
@@ -161,9 +161,9 @@ class Contract:
         job.state = "accepted"
         self._log(
             "accept", actor, job=job_id, amount=job.budget,
-            detail=f"tarif {fmt(pay_per_task)} ; marge {fmt(margin)} ; paie {fmt(payroll)}",
+            detail=f"rate {fmt(pay_per_task)}; margin {fmt(margin)}; payroll {fmt(payroll)}",
         )
-        self.record_decision(actor, "tarif", f"fixé à {fmt(pay_per_task)} USDC/tâche, dans les bornes", job_id)
+        self.record_decision(actor, "rate", f"set to {fmt(pay_per_task)} USDC/task, within bounds", job_id)
 
     def _check_bounds(self, pay: int) -> None:
         if pay < self.rules.task_pay_min:
@@ -171,22 +171,22 @@ class Contract:
         if pay > self.rules.task_pay_max:
             raise PatronError("ERR_PAY_ABOVE_MAX", f"{fmt(pay)} > {fmt(self.rules.task_pay_max)}")
 
-    # ----------------------------------------------------------------- embauche
+    # ----------------------------------------------------------------- hiring
     def hire(self, worker: str, *, actor: str | None = None) -> None:
         actor = actor or self.agent
         self._require_agent(actor)
         self._require_active()
         if worker in (self.agent, self.owner):
-            raise PatronError("ERR_FORBIDDEN_WORKER", "compte de l'agent ou du propriétaire")
+            raise PatronError("ERR_FORBIDDEN_WORKER", "agent or owner account")
         if worker in self.workers:
             raise PatronError("ERR_ALREADY_HIRED", worker)
         if self.near_balance < REGISTRATION_FEE_NEAR:
-            raise PatronError("ERR_INSUFFICIENT", "frais d'inscription NEAR")
+            raise PatronError("ERR_INSUFFICIENT", "NEAR registration fee")
         self.near_balance -= REGISTRATION_FEE_NEAR
         self.workers[worker] = Worker(account=worker, status=TRIAL, hired_ms=self.now_ms())
-        self._log("hire", actor, detail=worker, amount=0, reason="inscription au jeton payée par le contrat")
+        self._log("hire", actor, detail=worker, amount=0, reason="token registration paid by the contract")
 
-    # --------------------------------------------------------------------- paie
+    # --------------------------------------------------------------------- payroll
     def _norm(self, item) -> tuple[str, str, bool]:
         if isinstance(item, dict):
             return str(item["task_id"]), str(item["worker"]), bool(item.get("gold", False))
@@ -200,11 +200,11 @@ class Contract:
         self._require_active()
         job = self._job(job_id)
         if job.state != "accepted":
-            raise PatronError("ERR_PAYROLL_BUDGET", f"commande {job.state}")
+            raise PatronError("ERR_PAYROLL_BUDGET", f"order {job.state}")
         pay = job.pay_per_task if amount is None else amount
         batch = [self._norm(i) for i in items]
         if not batch or len(batch) > 10:
-            raise PatronError("ERR_BAD_ORDER", "un lot fait 1 à 10 tâches")
+            raise PatronError("ERR_BAD_ORDER", "a batch holds 1 to 10 tasks")
         self._check_bounds(pay)
         self._roll_day()
         keys: set[tuple[str, str, str]] = set()
@@ -217,9 +217,9 @@ class Contract:
             if w.status == FIRED:
                 raise PatronError("ERR_WORKER_FIRED", worker)
             if job.payroll_spent + total + pay > job.payroll_budget:
-                raise PatronError("ERR_PAYROLL_BUDGET", f"reste {fmt(job.payroll_left - total)}")
+                raise PatronError("ERR_PAYROLL_BUDGET", f"{fmt(job.payroll_left - total)} left")
             if self.daily["payroll"] + total + pay > self.rules.payroll_cap_per_day:
-                raise PatronError("ERR_DAILY_CAP", "plafond de paie du jour")
+                raise PatronError("ERR_DAILY_CAP", "daily payroll cap")
             if w.earned_today + pay > self.rules.worker_cap_per_day:
                 raise PatronError("ERR_WORKER_CAP", worker)
             keys.add(key)
@@ -234,7 +234,7 @@ class Contract:
             self.withdrawable[worker] = self.withdrawable.get(worker, 0) + pay
         job.payroll_spent += total
         self.daily["payroll"] += total
-        self._log("payroll", actor, job=job_id, amount=total, detail=f"{len(batch)} tâche(s) à {fmt(pay)}")
+        self._log("payroll", actor, job=job_id, amount=total, detail=f"{len(batch)} task(s) at {fmt(pay)}")
         return total
 
     def reject(self, job_id: str, task_id: str, worker: str, reason: str, *, gold: bool = False,
@@ -251,7 +251,7 @@ class Contract:
         w.tasks_rejected += 1
         w.gold_ko += 1 if gold else 0
         self._log("reject", actor, job=job_id, amount=0, detail=f"{task_id} / {worker[:8]}", reason=reason)
-        self.record_decision(actor, "refus", f"{reason} ({task_id})", job_id)
+        self.record_decision(actor, "rejection", f"{reason} ({task_id})", job_id)
 
     def fire(self, worker: str, *, actor: str | None = None) -> None:
         actor = actor or self.agent
@@ -259,15 +259,15 @@ class Contract:
         self._require_active()
         w = self._worker(worker)
         if w.status == FIRED:
-            raise PatronError("ERR_FIRE_NOT_JUSTIFIED", "déjà renvoyé")
+            raise PatronError("ERR_FIRE_NOT_JUSTIFIED", "already fired")
         if w.golds < self.rules.min_golds_before_fire:
-            raise PatronError("ERR_FIRE_NOT_JUSTIFIED", f"{w.golds} contrôle(s) < {self.rules.min_golds_before_fire}")
+            raise PatronError("ERR_FIRE_NOT_JUSTIFIED", f"{w.golds} hidden check(s) < {self.rules.min_golds_before_fire}")
         if w.accuracy_pct >= self.rules.fire_below_accuracy_pct:
-            raise PatronError("ERR_FIRE_NOT_JUSTIFIED", f"exactitude {w.accuracy_pct}%")
+            raise PatronError("ERR_FIRE_NOT_JUSTIFIED", f"accuracy {w.accuracy_pct}%")
         w.status = FIRED
         w.fired_ms = self.now_ms()
-        self._log("fire", actor, detail=worker, reason=f"{w.accuracy_pct}% sur {w.golds} contrôles")
-        self.record_decision(actor, "renvoi", f"{worker[:8]} : {w.accuracy_pct}% sur {w.golds} contrôles")
+        self._log("fire", actor, detail=worker, reason=f"{w.accuracy_pct}% on {w.golds} hidden checks")
+        self.record_decision(actor, "firing", f"{worker[:8]}: {w.accuracy_pct}% on {w.golds} hidden checks")
 
     def promote(self, worker: str, *, actor: str | None = None) -> None:
         actor = actor or self.agent
@@ -275,21 +275,21 @@ class Contract:
         w = self._worker(worker)
         if w.status == TRIAL and w.golds >= 2 and w.accuracy_pct >= 80:
             w.status = ACTIVE
-            self.record_decision(actor, "embauche", f"{worker[:8]} passe actif (essai payé réussi)")
+            self.record_decision(actor, "hiring", f"{worker[:8]} becomes active (paid trial passed)")
         elif w.status == ACTIVE and w.golds >= 20 and w.accuracy_pct >= 95:
             w.status = SENIOR
-            self.record_decision(actor, "promotion", f"{worker[:8]} senior à {w.accuracy_pct}% sur {w.golds} contrôles")
+            self.record_decision(actor, "promotion", f"{worker[:8]} senior at {w.accuracy_pct}% on {w.golds} hidden checks")
 
-    # ---------------------------------------------------------------- livraison
+    # ---------------------------------------------------------------- delivery
     def deliver(self, job_id: str, result_hash: str, n_validated: int, gold_reveal: dict[str, str],
                 *, actor: str | None = None) -> None:
         actor = actor or self.agent
         self._require_agent(actor)
         job = self._job(job_id)
         if job.state != "accepted" or n_validated < job.n_items:
-            raise PatronError("ERR_NOT_DELIVERABLE", f"{n_validated}/{job.n_items} validés, état {job.state}")
+            raise PatronError("ERR_NOT_DELIVERABLE", f"{n_validated}/{job.n_items} validated, state {job.state}")
         if sha256_hex(gold_reveal) != job.gold_commit:
-            raise PatronError("ERR_GOLD_MISMATCH", "la révélation ne correspond pas à l'engagement")
+            raise PatronError("ERR_GOLD_MISMATCH", "the reveal does not match the commitment")
         margin_total = job.margin_reserved + job.payroll_left
         owner, reserve, contributors = self._split(margin_total)
         self.buckets.add(owner, reserve, contributors)
@@ -301,10 +301,10 @@ class Contract:
         job.n_validated = n_validated
         job.delivered_ms = self.now_ms()
         self._log("sale", actor, job=job_id, amount=job.budget,
-                  detail=f"{n_validated} éléments, empreinte {result_hash[:16]}")
+                  detail=f"{n_validated} items, hash {result_hash[:16]}")
         self._log("margin", actor, job=job_id, amount=margin_total,
-                  detail=f"propriétaire {fmt(owner)} / réserve {fmt(reserve)} / contributeurs {fmt(contributors)}")
-        self.record_decision(actor, "livraison", f"marge {fmt(margin_total)} USDC ventilée", job_id)
+                  detail=f"owner {fmt(owner)} / reserve {fmt(reserve)} / contributors {fmt(contributors)}")
+        self.record_decision(actor, "delivery", f"margin {fmt(margin_total)} USDC split", job_id)
 
     def _split(self, total: int) -> tuple[int, int, int]:
         owner_pct, reserve_pct, contrib_pct = self.rules.revenue_split
@@ -316,82 +316,82 @@ class Contract:
         job = self._job(job_id)
         actor = actor or job.client
         if actor != job.client:
-            raise PatronError("ERR_NOT_AGENT", "seul le client rembourse")
+            raise PatronError("ERR_NOT_AGENT", "only the client can refund")
         if job.state == "delivered":
             raise PatronError("ERR_ALREADY_DELIVERED", job_id)
         if not job.open:
-            raise PatronError("ERR_ALREADY_DELIVERED", f"commande {job.state}")
+            raise PatronError("ERR_ALREADY_DELIVERED", f"order {job.state}")
         if self.now_ms() < job.deadline_ms:
-            raise PatronError("ERR_NOT_DUE", "échéance non passée")
+            raise PatronError("ERR_NOT_DUE", "deadline not reached")
         amount = job.budget - job.payroll_spent
         self.balance -= amount
         self.balances[job.client] = self.balances.get(job.client, 0) + amount
         job.margin_reserved = 0
         job.payroll_budget = job.payroll_spent
         job.state = "refunded"
-        self._log("refund", actor, job=job_id, amount=amount, detail="budget non dépensé rendu")
+        self._log("refund", actor, job=job_id, amount=amount, detail="unspent budget returned")
         return amount
 
-    # ------------------------------------------------------------------- coûts
+    # ------------------------------------------------------------------- costs
     def record_cost(self, provider: str, amount: int, *, job_id: str | None = None,
                     actor: str | None = None) -> None:
-        """L'inférence est payée sur la marge de la commande, jamais sur la paie."""
+        """Inference is paid out of the order's margin, never out of payroll."""
         actor = actor or self.agent
         self._require_agent(actor)
         self._roll_day()
         if amount <= 0:
-            raise PatronError("ERR_BAD_ORDER", "coût <= 0")
+            raise PatronError("ERR_BAD_ORDER", "cost <= 0")
         if self.daily["inference"] + amount > self.rules.inference_max_spend_per_day:
-            raise PatronError("ERR_INFERENCE_CAP", "plafond d'inférence du jour")
+            raise PatronError("ERR_INFERENCE_CAP", "daily inference cap")
         if job_id is not None:
             job = self._job(job_id)
             if job.margin_reserved < amount:
-                raise PatronError("ERR_INFERENCE_CAP", "marge de la commande épuisée")
+                raise PatronError("ERR_INFERENCE_CAP", "order margin exhausted")
             job.margin_reserved -= amount
             job.inference_spent += amount
         self.daily["inference"] += amount
         self.withdrawable[provider] = self.withdrawable.get(provider, 0) + amount
-        self._log("cost", actor, job=job_id or "", amount=amount, detail=f"inférence pour {provider}")
+        self._log("cost", actor, job=job_id or "", amount=amount, detail=f"inference for {provider}")
 
     def withdraw(self, account: str, amount: int) -> None:
         available = self.withdrawable.get(account, 0)
         if amount <= 0 or amount > available:
-            raise PatronError("ERR_INSUFFICIENT", f"{fmt(available)} disponible")
+            raise PatronError("ERR_INSUFFICIENT", f"{fmt(available)} available")
         if self.balance < amount:
-            raise PatronError("ERR_INSUFFICIENT", "solde du contrat")
+            raise PatronError("ERR_INSUFFICIENT", "contract balance")
         self.withdrawable[account] = available - amount
         self.balance -= amount
-        self._log("withdraw", account, amount=amount, detail="versement")
+        self._log("withdraw", account, amount=amount, detail="payout")
 
     def claim_unpaid(self, ticket: Ticket, *, actor: str | None = None) -> int:
-        """Le travailleur réclame une tâche que le patron n'a pas réglée à temps.
+        """The worker claims a task the boss did not settle in time.
 
-        Trois garde-fous : la signature de l'agent, le délai écoulé, et le fait que
-        la tâche ne soit pas déjà réglée. Le plafond de paie de la commande s'applique
-        quand même : un bon ne peut pas créer d'argent.
+        Three guards: the agent's signature, the elapsed delay, and the fact that
+        the task is not already settled. The order's payroll cap still applies
+        anyway: a ticket cannot create money.
         """
         actor = actor or ticket.worker
         if actor != ticket.worker:
-            raise PatronError("ERR_NOT_AGENT", "seul le bénéficiaire réclame son bon")
+            raise PatronError("ERR_NOT_AGENT", "only the recipient can claim their ticket")
         if not self.agent_pubkey or not ticket_ok(ticket, self.agent_pubkey):
-            raise PatronError("ERR_BAD_SIGNATURE", "bon de travail invalide")
+            raise PatronError("ERR_BAD_SIGNATURE", "invalid work ticket")
         if ticket.digest in self.claimed:
-            raise PatronError("ERR_ALREADY_SETTLED", "bon déjà réclamé")
+            raise PatronError("ERR_ALREADY_SETTLED", "ticket already claimed")
         if self.now_ms() < ticket.issued_ms + self.rules.pay_or_reject_seconds * 1000:
-            raise PatronError("ERR_NOT_DUE", "délai payer-ou-refuser non écoulé")
+            raise PatronError("ERR_NOT_DUE", "pay-or-reject delay not elapsed")
         job = self._job(ticket.job_id)
         key = (job.id, ticket.task_id, ticket.worker)
         if key in self.settled:
-            raise PatronError("ERR_ALREADY_SETTLED", "tâche déjà réglée par le patron")
+            raise PatronError("ERR_ALREADY_SETTLED", "task already settled by the boss")
         self._check_bounds(ticket.amount)
         self._roll_day()
         worker = self._worker(ticket.worker)
         if worker.status == FIRED:
             raise PatronError("ERR_WORKER_FIRED", ticket.worker)
         if job.payroll_spent + ticket.amount > job.payroll_budget:
-            raise PatronError("ERR_PAYROLL_BUDGET", f"reste {fmt(job.payroll_left)}")
+            raise PatronError("ERR_PAYROLL_BUDGET", f"{fmt(job.payroll_left)} left")
         if self.daily["payroll"] + ticket.amount > self.rules.payroll_cap_per_day:
-            raise PatronError("ERR_DAILY_CAP", "plafond de paie du jour")
+            raise PatronError("ERR_DAILY_CAP", "daily payroll cap")
         if worker.earned_today + ticket.amount > self.rules.worker_cap_per_day:
             raise PatronError("ERR_WORKER_CAP", ticket.worker)
         self.settled.add(key)
@@ -403,42 +403,42 @@ class Contract:
         self.daily["payroll"] += ticket.amount
         self.credit_withdrawable(ticket.worker, ticket.amount)
         self._log("claim", actor, job=job.id, amount=ticket.amount,
-                  detail=f"{ticket.task_id} — le silence valait paiement", reason=ticket.reason)
+                  detail=f"{ticket.task_id} — silence meant payment", reason=ticket.reason)
         return ticket.amount
 
     def credit_withdrawable(self, account: str, amount: int) -> None:
         self.withdrawable[account] = self.withdrawable.get(account, 0) + amount
 
     def apply_relayed_withdrawal(self, order: Withdrawal, *, relayer: str) -> int:
-        """Retrait signé par le travailleur, déposé par un relais (le site, l'agent…).
+        """Withdrawal signed by the worker, submitted by a relay (the site, the agent…).
 
-        Le bénéficiaire et le montant sont figés par la signature : un relais ne peut
-        ni se payer à la place du travailleur, ni gonfler le montant. Le nonce empêche
-        le rejeu, l'échéance borne la validité de l'ordre.
+        The recipient and the amount are frozen by the signature: a relay can
+        neither pay itself instead of the worker nor inflate the amount. The nonce prevents
+        replay, the deadline bounds the order's validity.
         """
         if not withdrawal_ok(order):
             raise PatronError("ERR_BAD_SIGNATURE", order.worker)
         key = f"{order.worker}#{order.nonce}"
         if key in self.claimed:
-            raise PatronError("ERR_ALREADY_SETTLED", "ordre déjà exécuté")
+            raise PatronError("ERR_ALREADY_SETTLED", "order already executed")
         available = self.withdrawable.get(order.worker, 0)
         if order.amount <= 0 or order.amount > available:
-            raise PatronError("ERR_INSUFFICIENT", f"{fmt(available)} disponible")
+            raise PatronError("ERR_INSUFFICIENT", f"{fmt(available)} available")
         self.claimed.add(key)
         self.withdrawable[order.worker] = available - order.amount
         self.pending_out[order.worker] = self.pending_out.get(order.worker, 0) + order.amount
         self._log("withdraw_signed", order.worker, amount=order.amount,
-                  detail=f"relayé par {relayer}", reason="ordre signé")
+                  detail=f"relayed by {relayer}", reason="signed order")
         return order.amount
 
     def settle_payout(self, worker: str, amount: int) -> None:
-        """Le jeton confirme le transfert : l'argent quitte la garde du contrat."""
+        """The token confirms the transfer: the money leaves the contract's custody."""
         self.pending_out[worker] = max(0, self.pending_out.get(worker, 0) - amount)
         self.balance -= amount
         self._log("paid", worker, amount=amount, detail="transfer confirmed")
 
     # ------------------------------------------------------------------ pause
-    def pause(self, reason: str = "coupe-circuit", *, actor: str | None = None) -> None:
+    def pause(self, reason: str = "kill switch", *, actor: str | None = None) -> None:
         actor = actor or self.owner
         if actor not in (self.owner, self.agent):
             raise PatronError("ERR_NOT_AGENT", actor)
@@ -450,10 +450,10 @@ class Contract:
         if actor not in (self.owner, self.agent):
             raise PatronError("ERR_NOT_AGENT", actor)
         self.paused = False
-        self._log("resume", actor, detail="reprise : les tâches en attente sont payées")
+        self._log("resume", actor, detail="resumed: pending tasks get paid")
 
-    # ------------------------------------------------------------------ lectures
-    # (implémentation dans boss/views.py pour rester sous 500 lignes par fichier)
+    # ------------------------------------------------------------------ reads
+    # (implemented in boss/views.py to stay under 500 lines per file)
     def get_job(self, job_id: str) -> dict:
         return views.get_job(self, job_id)
 

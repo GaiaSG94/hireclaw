@@ -1,9 +1,9 @@
-"""Ordre de retrait signé : le travailleur signe, n'importe qui relaie.
+"""Signed withdrawal order: the worker signs, anyone can relay.
 
-Un travailleur n'a jamais de NEAR (son compte implicite est créé dans le
-navigateur). Il signe donc un ordre de retrait avec sa clé Ed25519 — la clé dont
-l'hexadécimal EST son identifiant de compte — et le site (ou tout autre relais)
-dépose la transaction. Le bénéficiaire et le montant sont figés par la signature.
+A worker never holds NEAR (their implicit account is created in the
+browser). So they sign a withdrawal order with their Ed25519 key — the key whose
+hex IS their account id — and the site (or any other relay)
+submits the transaction. The recipient and the amount are frozen by the signature.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class Withdrawal:
     signature: str = ""
 
     def payload(self) -> dict:
-        """Mêmes clés, même ordre, mêmes types que le contrat Rust (canonical_withdrawal)."""
+        """Same keys, same order, same types as the Rust contract (canonical_withdrawal)."""
         return {
             "amount": self.amount,
             "deadline_ms": self.deadline_ms,
@@ -42,7 +42,7 @@ class Withdrawal:
 
 
 def issue(key: Key, amount: int, *, nonce: int | None = None, ttl_seconds: int = 120) -> Withdrawal:
-    """Le travailleur signe son ordre de retrait (compte implicite = sa clé publique)."""
+    """The worker signs their withdrawal order (implicit account = their public key)."""
     order = Withdrawal(
         worker=key.account,
         amount=amount,
@@ -54,7 +54,7 @@ def issue(key: Key, amount: int, *, nonce: int | None = None, ttl_seconds: int =
 
 
 def check(order: Withdrawal) -> bool:
-    """Vérification locale (mêmes règles que le contrat) : utile au relais avant d'envoyer."""
+    """Local check (same rules as the contract): handy for the relay before sending."""
     if not is_implicit(order.worker):
         return False
     if order.deadline_ms < int(time.time() * 1000):
@@ -63,5 +63,5 @@ def check(order: Withdrawal) -> bool:
 
 
 def is_implicit(account: str) -> bool:
-    """Un compte implicite NEAR est exactement l'hexadécimal de sa clé publique."""
+    """A NEAR implicit account is exactly the hex of its public key."""
     return len(account) == 64 and all(c in "0123456789abcdef" for c in account)

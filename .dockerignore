@@ -1,0 +1,8 @@
+.git
+.venv
+G-DESIGN
+contract/target
+scripts/node_modules
+__pycache__
+*.pyc
+runs

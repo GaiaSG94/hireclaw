@@ -1,4 +1,4 @@
-"""Site de démo : /work (le visiteur travaille), /boss (tableau), /ledger (registre)."""
+"""Demo site: /work (the visitor works), /boss (dashboard), /ledger (ledger)."""
 from __future__ import annotations
 
 import argparse
@@ -21,7 +21,7 @@ PAGE_TTL_S = 0.25
 
 
 class Live:
-    """Un monde qui tourne : les robots alimentent les majorités, le visiteur aide."""
+    """A running world: robots feed the majorities, the visitor helps."""
 
     def __init__(self, seed: int = 11, n_items: int = 12, budget: int = usdc("1.20")) -> None:
         self.lock = threading.RLock()
@@ -31,14 +31,14 @@ class Live:
         self.fallback_keys: dict[str, Key] = {}
         self.hired_on_chain: set[str] = set()
         self.last_tx: dict[str, str] = {}
-        # cartes servies aux visiteurs : on ne change pas de monde tant qu'elles sont ouvertes
+        # cards served to visitors: the world is not swapped while any is still open
         self.pending_cards: dict[str, float] = {}
         self.chain_job: str | None = chain.site_job() if chain.available() else None
         self.last_delivery: dict | None = None
         self._new_world()
         threading.Thread(target=self._loop, daemon=True).start()
 
-    # --------------------------------------------------------------- cycle de vie
+    # --------------------------------------------------------------- lifecycle
     def _new_world(self) -> None:
         self.seed += 1
         self.world = World.create(seed=self.seed, n_items=self.n_items, budget=self.budget)
@@ -53,15 +53,15 @@ class Live:
                     else:
                         self.world._step()
                         self.world.agent.manage()
-            except Exception as exc:  # pragma: no cover - garde-fou de démo
-                print("boucle :", exc)
+            except Exception as exc:  # pragma: no cover - demo safety net
+                print("loop:", exc)
             time.sleep(PAGE_TTL_S)
 
     def _job_done(self) -> bool:
         return len(self.world.agent.engine.labels) >= len(self.world.agent.item_ids)
 
     def _cards_open(self, max_age_s: float = 90.0) -> bool:
-        """Vrai si un visiteur a une carte en cours : on ne coupe pas la commande sous ses pieds."""
+        """True if a visitor has a card open: the order is not pulled from under them."""
         now = time.time()
         self.pending_cards = {k: v for k, v in self.pending_cards.items() if now - v < max_age_s}
         return bool(self.pending_cards)
@@ -73,10 +73,10 @@ class Live:
             self.last_delivery = {"job": self.world.job_id, "correct": good, "total": total,
                                   "at": time.time()}
         except Exception as exc:  # pragma: no cover
-            print("livraison :", exc)
+            print("delivery:", exc)
         self._new_world()
 
-    # ------------------------------------------------------------------ visiteur
+    # ------------------------------------------------------------------ visitor
     def hire(self, account: str) -> None:
         if not account:
             return
@@ -86,10 +86,12 @@ class Live:
             contract = self.world.contract
             if account not in contract.workers and contract.paused is False:
                 contract.hire(account)
-                contract.pubkeys[account] = account  # compte implicite = clé publique
+                contract.pubkeys[account] = account  # implicit account = public key
             elif account not in contract.pubkeys:
                 contract.pubkeys[account] = account
-        # Le relais inscrit le travailleur sur la chaîne (le contrat paie son storage).
+        # The relay registers the worker on chain (the contract pays their storage).
+        if not self.chain_job:
+            return  # no relay at startup: local mode, nothing to register on chain
         result = chain.hire(account)
         if result.get("ok") or result.get("error") == "ERR_ALREADY_HIRED":
             self.hired_on_chain.add(account)
@@ -120,7 +122,7 @@ class Live:
             if signature is None:
                 key = self.fallback_keys.get(account)
                 if key is None:
-                    return {"error": "clé inconnue"}
+                    return {"error": "unknown key"}
                 from .keys import answer_payload
 
                 signature = key.sign(answer_payload(account, body["task_id"],
@@ -135,27 +137,27 @@ class Live:
             except Exception as exc:
                 code = getattr(exc, "code", str(exc))
                 if code == "ERR_UNKNOWN_TASK":
-                    # la commande a tourné pendant que la carte était ouverte : on resservira
+                    # the order rolled over while the card was open: a new one will be served
                     self.pending_cards.pop(body.get("task_id", ""), None)
-                    return {"retry": True, "reason": "nouvelle commande"}
+                    return {"retry": True, "reason": "new order"}
                 return {"error": code}
             self.pending_cards.pop(body.get("task_id", ""), None)
             worker = self.world.contract.get_worker(account)
             if worker["tasks_paid"] > before_paid:
-                status, reason = "pay", "validée"
+                status, reason = "pay", "validated"
                 tx = self._pay_on_chain(account, body["task_id"])
                 if tx:
                     self.last_tx[account] = tx
             elif worker["tasks_rejected"] > before_ko:
                 status, reason = "reject", self._last_reason(body["task_id"])
             else:
-                status, reason = "pending", "en attente d'autres réponses"
+                status, reason = "pending", "waiting for other answers"
             return {"decisions": out["decisions"], "worker": worker,
                     "task_status": status, "reason": reason, "labels": out["labels"],
                     "chain_tx": self.last_tx.get(account), "chain_job": self.chain_job}
 
     def _pay_on_chain(self, account: str, task_id: str) -> str | None:
-        """La même tâche est réglée sur la chaîne : le visiteur voit sa transaction."""
+        """The same task is settled on chain: the visitor sees their transaction."""
         if not self.chain_job or not chain.available():
             return None
         item = {"task_id": f"site-{task_id}", "worker": account, "gold": False}
@@ -168,24 +170,24 @@ class Live:
         return None
 
     def withdraw(self, body: dict) -> dict:
-        """Retrait signé par le travailleur, relayé par le site.
+        """Withdrawal signed by the worker, relayed by the site.
 
-        Le navigateur signe quand WebCrypto gère Ed25519 ; sinon (clé de secours
-        générée côté serveur) c'est le serveur qui signe pour le compte du visiteur.
-        Dans les deux cas la clé privée ne sort jamais de son détenteur.
+        The browser signs when WebCrypto supports Ed25519; otherwise (fallback key
+        generated server-side) the server signs on the visitor's behalf.
+        Either way the private key never leaves its holder.
         """
         ticket = body.get("ticket") or {}
         worker = ticket.get("worker") or body.get("worker") or ""
         if not worker:
-            return {"ok": False, "error": "ERR_BAD_REQUEST", "detail": "worker manquant"}
+            return {"ok": False, "error": "ERR_BAD_REQUEST", "detail": "missing worker"}
         if not ticket.get("signature"):
             key = self.fallback_keys.get(worker)
             if key is None:
                 return {"ok": False, "error": "ERR_BAD_SIGNATURE",
-                        "detail": "signez l'ordre dans le navigateur"}
+                        "detail": "sign the order in your browser"}
             due = self.world.contract.withdrawable.get(worker, 0)
             if due <= 0:
-                return {"ok": False, "error": "ERR_INSUFFICIENT", "detail": "rien à retirer"}
+                return {"ok": False, "error": "ERR_INSUFFICIENT", "detail": "nothing to withdraw"}
             order = withdrawal.issue(key, due)
             ticket = order.to_dict()
         return chain.withdraw(ticket)
@@ -194,9 +196,9 @@ class Live:
         for entry in reversed(self.world.contract.ledger):
             if entry.kind == "reject" and task_id in entry.detail:
                 return entry.reason
-        return "refusée"
+        return "rejected"
 
-    # ------------------------------------------------------------------- lecture
+    # ------------------------------------------------------------------- reads
     def snapshot(self) -> dict:
         with self.lock:
             data = self.world.snapshot()
@@ -248,7 +250,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"text": report.readme_text()})
         if parsed.path == "/api/worker":
             return self._json(self.live.fallback_worker())
-        return self._json({"error": "inconnu"}, 404)
+        return self._json({"error": "not found"}, 404)
 
     def do_POST(self) -> None:  # noqa: N802
         length = int(self.headers.get("Content-Length", 0))
@@ -256,22 +258,22 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = json.loads(raw or b"{}")
         except json.JSONDecodeError:
-            return self._json({"error": "json invalide"}, 400)
+            return self._json({"error": "invalid json"}, 400)
         if self.path == "/api/answer":
             return self._json(self.live.answer(body))
         if self.path == "/api/worker":
             return self._json(self.live.fallback_worker())
         if self.path == "/api/withdraw":
             return self._json(self.live.withdraw(body))
-        return self._json({"error": "inconnu"}, 404)
+        return self._json({"error": "not found"}, 404)
 
-    # -------------------------------------------------------------------- outils
+    # -------------------------------------------------------------------- helpers
     def _file(self, name: str, ctype: str) -> None:
         path = (WEB / name).resolve()
         if not str(path).startswith(str(WEB.parent.resolve())):
-            return self._json({"error": "chemin refusé"}, 400)
+            return self._json({"error": "path refused"}, 400)
         if not path.exists():
-            return self._json({"error": "fichier absent"}, 404)
+            return self._json({"error": "file not found"}, 404)
         payload = path.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", ctype)
@@ -292,13 +294,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Hireclaw — site de démo")
+    parser = argparse.ArgumentParser(description="Hireclaw — demo site")
     parser.add_argument("--port", type=int, default=8137)
     parser.add_argument("--host", default="127.0.0.1")
     args = parser.parse_args(argv)
     Handler.live = Live()
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"Hireclaw sur http://{args.host}:{args.port}/work  (Ctrl-C pour arrêter)")
+    print(f"Hireclaw on http://{args.host}:{args.port}/work  (Ctrl-C to stop)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

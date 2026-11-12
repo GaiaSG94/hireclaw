@@ -1,359 +1,349 @@
-# Hireclaw — l'agent-patron
+# Hireclaw — the boss agent
 
-**Pitch.** Hireclaw est une IA qui embauche des humains : elle reçoit une commande
-(étiqueter N avis de produits), la découpe en micro-tâches, embauche n'importe qui a
-un navigateur, contrôle la qualité, paie chaque tâche validée en quelques secondes en
-USDC, livre le résultat et garde une marge. Son code du travail — salaire plancher,
-plafond, renvoi, refus motivés, plafonds journaliers — est écrit dans le contrat
-NEAR : le patron est une IA, il ne peut pas déroger à ces règles.
+**Pitch.** Hireclaw is an AI that hires humans: it receives an order (label N
+product reviews), splits it into micro-tasks, hires anyone with a browser, checks
+quality, pays each validated task within seconds in USDC, delivers the result and
+keeps a margin. Its labor code — wage floor, wage ceiling, firing, justified
+rejections, daily caps — is written in the NEAR contract: the boss is an AI, and it
+cannot deviate from these rules.
 
-- Dépôt public : <https://github.com/BaptisteFaisy/hireclaw>
-- Contrat sur NEAR testnet : `hireclaw.defraie.testnet`
-- Explorateur : <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>
+- Public repository: <https://github.com/GaiaSG94/hireclaw>
+- Contract on NEAR testnet: `hireclaw.defraie.testnet`
+- Explorer: <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>
 
 ---
 
-## 1. Tracks visés
+## 1. Target tracks
 
-| Track | Pourquoi nous y claimons |
+| Track | Why we claim it |
 |---|---|
-| business / Autonomous Business | L'agent est une entreprise à une seule fonction : recevoir une commande, produire un livrable, encaisser. Toute la logique d'entreprise (budget de paie, marge, réserves, clés d'arrêt) est exécutée par un contrat, pas par une feuille de calcul : c'est une activité autonome avec ses invariants financiers vérifiés (`get_solvency` → `balanced: true`). |
-| realworld / Real-World Money | Les règles sont écrites en USDC et appliquées en USDC, sans intermédiaire : le client avance 1,20 USDC, le contrat bloque la paie et la marge, le travailleur reçoit 0,08 USDC par tâche, le reste est ventilé 60/30/10. L'argent du travail et les conditions du travail sont le même objet on-chain. |
-| agents / Agent Economy | C'est le cœur du projet : un agent qui est *donneur d'ordre*, qui embauche, qui contrôle, qui paie, qui refuse, qui livre. L'autre moitié de l'économie des agents — celle qui produit le travail humain à la demande d'une machine — n'existait pas comme protocole. Ici, l'agent est dépendant de recommandations humaines, et ces recommandations deviennent un marché avec des prix, des contrôles et des recours, le tout dans le contrat. |
+| business / Autonomous Business | The agent is a single-function company: receive an order, produce a deliverable, collect payment. All the business logic (payroll budget, margin, reserves, kill switch) is executed by a contract, not by a spreadsheet: it is an autonomous business whose financial invariants are verified (`get_solvency` → `balanced: true`). |
+| realworld / Real-World Money | The rules are written in USDC and enforced in USDC, with no intermediary: the client advances 1.20 USDC, the contract locks the payroll and the margin, the worker receives 0.02 USDC per validated task, the remainder is split 60/30/10. The money for the work and the conditions of the work are the same on-chain object. |
+| agents / Agent Economy | This is the core of the project: an agent that is the *principal*, that hires, checks, pays, rejects and delivers. The other half of the agent economy — the half that produces human work at a machine's request — did not exist as a protocol. Here the agent depends on human recommendations, and those recommendations become a market with prices, checks and recourse, all inside the contract. |
 
 ---
 
-## 2. Le problème
+## 2. The problem
 
-Les équipes d'IA ont besoin d'un jugement humain à deux moments : quand le
-contexte est ambigu (nuance, sentiment, qualité rédactionnelle, annotation
-visuelle fine) et quand l'automatisation a échoué (relève d'un agent, contrôle
-qualité). Ces deux besoins passent aujourd'hui par les plateformes de
-micro-travail classiques, qui ont trois défauts :
+AI teams need human judgment at two moments: when the context is ambiguous
+(nuance, sentiment, writing quality, fine-grained visual annotation) and when
+automation has failed (taking over from an agent, quality control). Today both
+needs go through the classic micro-work platforms, which have three flaws:
 
-- **coûteuses** : les commissionnements et les montants minimums sont calibrés
-  pour des lots de centaines de dollars, pas pour des dizaines de centimes ;
-- **lentes** : le cycle embossage → validation → paie se compte en jours, ce qui est
-  incompatible avec une boucle agent ;
-- **géographiquement fermées** : les travailleurs doivent appartenir à des pays et
-  à des juridictions précises, et le paiement passe par des rails locaux.
+- **expensive**: commissions and minimum amounts are calibrated for batches of
+  hundreds of dollars, not for tens of cents;
+- **slow**: the hiring → validation → pay cycle is counted in days, which is
+  incompatible with an agent loop;
+- **geographically closed**: workers must belong to specific countries and
+  jurisdictions, and payment goes through local rails.
 
-Et surtout : **aucune de ces plateformes n'a été pensée pour un agent donneur
-d'ordre**. Elles collectent des réponses humaines ; un agent n'a ni ne peut avoir
-de formulaire. On peut automatiser l'accès à Mechanical Turk, mais on ne peut pas
-contraindre la plateforme à payer un humain en deux secondes, ni garantir au
-travailleur un plancher de salaire, ni garantir au client qu'un refus sera motivé
-et public.
+And above all: **none of these platforms was designed for an agent acting as the
+principal**. They collect human answers; an agent does not have, and cannot have,
+a form. Access to Mechanical Turk can be automated, but the platform cannot be
+forced to pay a human within two seconds, nor to guarantee the worker a wage
+floor, nor to guarantee the client that a rejection will be justified and public.
 
-C'est pourquoi **0,02 USDC n'a de sens que si payer ne coûte presque rien et
-arrive tout de suite**. À 0,02 USDC la tâche, la marge est vite faite : la
-moitié du revenu part dans les frais de paiement, et un délai de trois jours
-rend la boucle agent impossible. NEAR donne exactement les deux propriétés
-manquantes : finalité sub-seconde, frais négligeables, comptes implicites
-(création de clé sans inscription ni transaction), et un contrat capable de
-porter les règles du travail lui-même.
+That is why **0.02 USDC only makes sense if paying costs almost nothing and
+arrives immediately**. At 0.02 USDC per task the margin is quickly gone: half of
+the revenue goes into payment fees, and a three-day delay makes the agent loop
+impossible. NEAR provides exactly the two missing properties: sub-second
+finality, negligible fees, implicit accounts (key creation with no sign-up and no
+transaction), and a contract able to carry the labor rules itself.
 
 ---
 
-## 3. Ce qui est construit
+## 3. What is built
 
-### 3.1 Le contrat (Rust, `near-sdk` v5)
+### 3.1 The contract (Rust, `near-sdk` v5)
 
-| Élément | Valeur |
+| Item | Value |
 |---|---|
-| Réseau | NEAR testnet |
-| Contrat | `hireclaw.defraie.testnet` |
+| Network | NEAR testnet |
+| Contract | `hireclaw.defraie.testnet` |
 | Agent | `agent.hireclaw.defraie.testnet` |
 | Client | `client.hireclaw.defraie.testnet` |
-| Jeton | `usd.panneau.testnet` (NEP-141, 6 décimales) |
-| WASM | 244,4 Ko |
-| ABI | NEAR 0.4.0, 31 méthodes dans le dépôt ; 30 déployées sur testnet (`promote` attend un redéploiement, faute de NEAR libre sur le compte contrat) |
-| sha256 du WASM | `bc2cdcd8be199d5ec1c84944acc8d1f4dbeaf6dd545aaea5fe541fdc88d9b4ca` |
+| Token | `usd.panneau.testnet` (NEP-141, 6 decimals) |
+| WASM | 244.4 KB |
+| ABI | NEAR 0.4.0, 31 methods in the repository; 30 deployed on testnet (`promote` is waiting for a redeployment, for lack of free NEAR on the contract account) |
+| WASM sha256 | `bc2cdcd8be199d5ec1c84944acc8d1f4dbeaf6dd545aaea5fe541fdc88d9b4ca` |
 
-Standards respectés : récepteur NEP-141 (`ft_on_transfer`), sortie d'argent en
-cross-contract `ft_transfer` avec callback `on_payout`, `storage_deposit` payé par
-le contrat à l'embauche (le travailleur n'a jamais besoin de NEAR), événements
-NEP-297 (`EVENT_JSON`), metadata NEP-330.
+Standards followed: NEP-141 receiver (`ft_on_transfer`), money leaves through a
+cross-contract `ft_transfer` with an `on_payout` callback, `storage_deposit` paid
+by the contract at hiring time (the worker never needs NEAR), NEP-297 events
+(`EVENT_JSON`), NEP-330 metadata.
 
-Le contrat n'est pas une maquette : il tient les comptes (budget de paie, marge,
-poches), applique les bornes, refuse les attaques et refuse de payer deux fois la
-même paire (tâche, travailleur).
+The contract is not a mock-up: it keeps the books (payroll budget, margin,
+buckets), enforces the bounds, refuses the attacks and refuses to pay the same
+(task, worker) pair twice.
 
-### 3.2 L'agent
+### 3.2 The agent
 
-Boucle de patron : servir → juger → payer par lots → embaucher → renvoyer →
-livrer. Il découpe la commande en micro-tâches, calcule le budget de paie et la
-marge avant d'accepter, et ne peut jamais payer une tâche hors bornes : s'il le
-fait, le contrat rejette la transaction.
+Boss loop: serve → judge → pay in batches → hire → fire → deliver. It splits the
+order into micro-tasks, computes the payroll budget and the margin before
+accepting, and can never pay a task outside the bounds: if it does, the contract
+rejects the transaction.
 
-### 3.3 Le moteur de qualité
+### 3.3 The quality engine
 
-- 20 % de contrôles cachés (gold) injectés dans le flux ;
-- redondance 3 sur chaque élément ;
-- règle de majorité (majorité dès 2 réponses concordantes) ;
-- l'élément ambigu est **payé** (on ne paie pas l'incertitude du client) ;
-- détection des réponses trop rapides (moins de 300 ms sur le même bouton : robot
-  tricheur détecté) ;
-- chaque refus est motivé et public dans le registre.
+- 20% hidden checks (gold) injected into the flow;
+- redundancy 3 on every item;
+- majority rule (majority as soon as 2 answers agree);
+- the ambiguous item is **paid** (the worker is not charged for the client's
+  uncertainty);
+- detection of answers that are too fast (under 300 ms on the same button:
+  cheating bot detected);
+- every rejection is justified and public in the ledger.
 
-### 3.4 La démonstration déterministe (`make demo`)
+### 3.4 The deterministic demo (`make demo`)
 
-| Grandeur | Valeur |
+| Quantity | Value |
 |---|---|
-| Commande | 1,20 USDC pour 12 éléments |
-| Marge réservée | 0,18 USDC |
-| Budget de paie | 1,02 USDC |
-| Équipage | 5 robots : 3 soigneux (95 %), 1 brouillon (60 %), 1 tricheur (bouton fixe, 120 ms) |
-| Renvoi | le tricheur est renvoyé à 5 contrôles / 0 % |
-| Livraison | 12/12 éléments corrects |
-| Paie versée | 0,98 USDC, soit 0,08 USDC par étiquette |
-| Marge ventilée | 60 % propriétaire / 30 % réserve / 10 % contributeurs |
-| Invariants | « INVARIANTS OK » |
+| Order | 1.20 USDC for 12 items |
+| Reserved margin | 0.18 USDC |
+| Payroll budget | 1.02 USDC |
+| Crew | 5 bots: 3 careful (95%), 1 sloppy (60%), 1 cheater (fixed button, 120 ms) |
+| Firing | the cheater is fired at 5 checks / 0% |
+| Delivery | 12/12 items correct |
+| Payroll paid out | 0.98 USDC, i.e. 0.08 USDC per label |
+| Margin split | 60% owner / 30% reserve / 10% contributors |
+| Invariants | "INVARIANTS OK" |
 
-### 3.5 Le site (6 pages)
+### 3.5 The site (7 pages)
 
-| Page | Contenu |
+| Page | Content |
 |---|---|
-| `/work` | le visiteur travaille et est payé : clé Ed25519 créée dans le navigateur, tâche, réponse signée, paiement |
-| `/boss` | le tableau du patron : avancement, budget de paie, marge, travailleurs, paiements, décisions |
-| `/ledger` | le registre et l'état du contrat testnet lu en direct |
-| `/demo` | la démo rejouée, avec les 11 attaques refusées |
-| `/testnet` | adresses, règles on-chain, solvabilité lue sur la chaîne, transactions de preuve, ABI |
-| `/code` | inventaire du dépôt, tests, README |
+| `/work` | the visitor works and gets paid: Ed25519 key created in the browser, task, signed answer, payment |
+| `/boss` | the boss's dashboard: progress, payroll budget, margin, workers, payments, decisions |
+| `/ledger` | the ledger and the state of the testnet contract, read live |
+| `/demo` | the demo replayed, with the 11 attacks refused |
+| `/scene` | the scenario in 15 steps: every actor is a glass sphere, money is a liquid that moves from the client to the contract to the workers; annotated with the real ledger via `GET /api/replay` |
+| `/testnet` | addresses, on-chain rules, solvency read from the chain, proof transactions, ABI |
+| `/code` | repository inventory, tests, README |
 
-URL : `http://100.120.194.92:8137/work` (tailnet stable) et
-`https://beijing-gave-locking-examine.trycloudflare.com/work` (tunnel Cloudflare
-public temporaire).
+URL: `http://100.120.194.92:8137/work` (stable tailnet) and
+`https://beijing-gave-locking-examine.trycloudflare.com/work` (temporary public
+Cloudflare tunnel).
 
-### 3.6 C-F14 : le bon de travail signé
+### 3.6 C-F14: the signed work ticket
 
-Un bon de travail signé par l'agent, plus `claim_unpaid(ticket)` : vérification
-Ed25519 on-chain, délai « payer ou refuser » (`pay_or_reject_seconds`), double
-réclamation impossible, bornes et plafonds appliqués même dans ce chemin. Si le
-patron se tait, le travailleur peut réclamer lui-même ce qui lui est dû.
+A work ticket signed by the agent, plus `claim_unpaid(ticket)`: on-chain Ed25519
+verification, "pay or reject" delay (`pay_or_reject_seconds`), double claim
+impossible, bounds and caps enforced on this path too. If the boss stays silent,
+the worker can claim what is owed directly.
 
 ---
 
-## 4. La différence : le code du travail est dans le contrat
+## 4. The difference: the labor code is in the contract
 
-La plupart des plateformes de micro-travail ont des règles dans une base de
-données, modifiables par un humain ou par un script. Ici, les règles sont du code
-exécuté par la chaîne, et le « patron » est une IA qui n'a aucun pouvoir
-d'exception.
+Most micro-work platforms keep their rules in a database, editable by a human or
+by a script. Here the rules are code executed by the chain, and the "boss" is an
+AI with no power to make exceptions.
 
-| Règle | Valeur | Qui l'applique |
+| Rule | Value | Enforced by |
 |---|---|---|
-| Salaire plancher par tâche | 0,02 USDC | contrat |
-| Salaire plafond par tâche | 0,10 USDC | contrat |
-| Plafond de paie journalier (global) | 20 USDC | contrat |
-| Plafond par travailleur et par jour | 2 USDC | contrat |
-| Marge minimale mise de côté à l'acceptation | 15 % | contrat (garantie par construction : le budget de paie est dérivé de la marge réservée) |
-| Refus de tâche | motivé et public | agent, motif inscrit au registre |
-| Renvoi d'un travailleur | impossible sans au moins 5 contrôles et sous 60 % d'exactitude | contrat (compteurs on-chain) |
-| Réclamation de la paie (« payer ou refuser ») | délai borné, ticket signé | contrat (`claim_unpaid`) |
-| Répartition de la marge | 60 % propriétaire / 30 % réserve / 10 % contributeurs | contrat |
-| Coupe-circuit du propriétaire |Oui | propriétaire (seule chose non dérogable : l'arrêt) |
-| Paiement hors bornes | refusé (`ERR_PAY_BELOW_MIN`, `ERR_PAY_ABOVE_MAX`) | contrat |
-| Plafonds dépassés | refusé (`ERR_DAILY_CAP`, `ERR_WORKER_CAP`, `ERR_PAYROLL_BUDGET`) | contrat |
+| Wage floor per task | 0.02 USDC | contract |
+| Wage ceiling per task | 0.10 USDC | contract |
+| Daily payroll cap (global) | 20 USDC | contract |
+| Cap per worker per day | 2 USDC | contract |
+| Minimum margin set aside at acceptance | 15% | contract (guaranteed by construction: the payroll budget is derived from the reserved margin) |
+| Task rejection | justified and public | agent, reason written to the ledger |
+| Firing a worker | impossible without at least 5 checks and accuracy below 60% | contract (on-chain counters) |
+| Claiming pay ("pay or reject") | bounded delay, signed ticket | contract (`claim_unpaid`) |
+| Margin split | 60% owner / 30% reserve / 10% contributors | contract |
+| Owner kill switch | Yes | owner (the only thing that cannot be overridden: the stop) |
+| Payment outside the bounds | refused (`ERR_PAY_BELOW_MIN`, `ERR_PAY_ABOVE_MAX`) | contract |
+| Caps exceeded | refused (`ERR_DAILY_CAP`, `ERR_WORKER_CAP`, `ERR_PAYROLL_BUDGET`) | contract |
 
-Ces contraintes protègent aussi **les travailleurs**, et c'est le point le plus
-important du dossier :
+These constraints also protect **the workers**, and this is the most important
+point of the submission:
 
-- le plancher de 0,02 USDC est garanti par le contrat, pas par la bonne volonté du
-  donneur d'ordre ;
-- le plafond de 2 USDC par travailleur et par jour protège des drainages ;
-- le refus motivé et public donne au travailleur un droit de contestation
-  documenté, au lieu d'un bannissement sans motif ;
-- le renvoi exige 5 contrôles et un seuil d'exactitude : un agent ne peut pas
-  « désengager » quelqu'un sur un seul doute ;
-- le bon de travail signé donne un recours si l'agent ne paie jamais.
+- the 0.02 USDC floor is guaranteed by the contract, not by the goodwill of the
+  principal;
+- the cap of 2 USDC per worker per day protects against draining;
+- the justified, public rejection gives the worker a documented right to
+  contest, instead of a ban with no reason;
+- firing requires 5 checks and an accuracy threshold: an agent cannot "drop"
+  someone on a single doubt;
+- the signed work ticket provides recourse if the agent never pays.
 
-Autrement dit : on ne demande pas la confiance à un intermédiaire. On écrit les
-règles dans le contrat, et le patron est le premier soumis.
+In other words: nobody is asked to trust an intermediary. The rules are written
+in the contract, and the boss is the first one bound by them.
 
 ---
 
-## 5. Preuves
+## 5. Evidence
 
-### 5.1 Sur la chaîne
+### 5.1 On-chain
 
-- Contrat : `hireclaw.defraie.testnet` — <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>
-- Cycle joué : `mint` → `ft_transfer_call` (commande 1,20 USDC) → `accept_job` →
-  embauche → `pay_batch` ×3 (0,08 USDC chacun) → `reject` « minority » →
+- Contract: `hireclaw.defraie.testnet` — <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>
+- Cycle executed: `mint` → `ft_transfer_call` (1.20 USDC order) → `accept_job` →
+  hiring → `pay_batch` ×3 (0.08 USDC each) → `reject` "minority" →
   `deliver` → `withdraw`.
-- La travailleuse alice a réellement reçu ses USDC sur son compte (retrait `ft_transfer`).
-- `get_solvency` renvoie `balanced: true` : 1,20 USDC en garde = 1,20 USDC d'engagements.
+- The worker alice actually received her USDC on her account (`ft_transfer` withdrawal).
+- `get_solvency` returns `balanced: true`: 1.20 USDC in custody = 1.20 USDC of liabilities.
 
-Les 14 transactions publiques du cycle (job-0001), dans l'ordre :
+The 14 public transactions of the cycle (job-0001), in order:
 
-| # | Étape | Transaction |
+| # | Step | Transaction |
 |---|---|---|
-| 1 | `mint 5.00 USDC` — le client se minte des USDC de test (jeton NEP-141) | [`3njZ8TizuLWG…`](https://testnet.nearblocks.io/txns/3njZ8TizuLWGVwRyYRssbwJtKqgaa7d9omw7pm6CaBSu) |
-| 2 | `ft_transfer_call 1.20 USDC` — la commande payée d'avance, budget bloqué par le contrat | [`61E1VSzpp1R7…`](https://testnet.nearblocks.io/txns/61E1VSzpp1R7qJDbvKKsEw6qMFCTxWCdKX4uxF5b7UwC) |
-| 3 | `accept_job 0.02 USDC/tâche` — marge réservée 0,18 et budget de paie 1,02 figés | [`A7GSj3TjCdHJ…`](https://testnet.nearblocks.io/txns/A7GSj3TjCdHJJBSs2x9EvgMRLBDB9GbmHTDqDFdCnTyk) |
-| 4 | `hire alice` — embauche : le contrat paie l'inscription au jeton | [`EpuoLSes6Wyz…`](https://testnet.nearblocks.io/txns/EpuoLSes6WyzRDzRuoEvRBembYSECC3UUNRMUqWrHNfk) |
-| 5 | `hire bob` — embauche (2e travailleur) | [`HXJYw8h4mVn3…`](https://testnet.nearblocks.io/txns/HXJYw8h4mVn3BzrfQLG3D9uet8N9QwgEsbcy9VbtrcSH) |
-| 6 | `hire chloe` — embauche (3e travailleur) | [`woZbg8NMwuhA…`](https://testnet.nearblocks.io/txns/woZbg8NMwuhAfMjC7GCdJQxRUsKKg5GbEHanXKeoqHi) |
-| 7 | `pay_batch alice (4 tâches = 0.08 USDC)` — paie par lot de 4 tâches validées | [`2tnSvgDbc8FK…`](https://testnet.nearblocks.io/txns/2tnSvgDbc8FKjop1kpYtje98qhFU4QGW4evdjzPPE9AM) |
-| 8 | `pay_batch bob (4 tâches = 0.08 USDC)` — paie par lot (2e travailleur) | [`DXdog27ZLJSg…`](https://testnet.nearblocks.io/txns/DXdog27ZLJSgSCiyaXNt1NGEpUQiZtphL3Wv8H5Q6Lzd) |
-| 9 | `pay_batch chloe (4 tâches = 0.08 USDC)` — paie par lot (3e travailleur) | [`4a57r1DJmcrg…`](https://testnet.nearblocks.io/txns/4a57r1DJmcrg2itCRyocpAjDTrf2dK7P3hjBoqXKgXeG) |
-| 10 | `reject minority` — refus motivé et public (réponse minoritaire) | [`9Z9YdcJZe541…`](https://testnet.nearblocks.io/txns/9Z9YdcJZe541U3eVAs4vp7pyLVRdTCsxMjBJeYCpNA93) |
-| 11 | `set_agent_key (clé de signature de l'agent)` — l'agent publie sa clé de signature de bons | [`9UAEACZGqfUx…`](https://testnet.nearblocks.io/txns/9UAEACZGqfUxA6dpJ55ioMdxUSLZTUDNGcAJJ1pLunwM) |
-| 12 | `claim_unpaid (le travailleur réclame son bon)` — C-F14 : le silence vaut paiement, bon signé honoré | [`Hmij56VviMDm…`](https://testnet.nearblocks.io/txns/Hmij56VviMDmcBbiCdCFSgCAoGUjpbyRwTDhPEpSGqrm) |
-| 13 | `deliver` — livraison, marge ventilée 60/30/10 | [`6xcspUs9KEkK…`](https://testnet.nearblocks.io/txns/6xcspUs9KEkKutETQR9PtSWRiYJRbjs58FgRxNpRzGVj) |
-| 14 | `withdraw alice` — la travailleuse encaisse en USDC réels | [`aMgRgkYhAzBB…`](https://testnet.nearblocks.io/txns/aMgRgkYhAzBB1XKGd2nDGdDx2krjgVS6RGJ65hPteoK) |
+| 1 | `mint 5.00 USDC` — the client mints test USDC for itself (NEP-141 token) | [`3njZ8TizuLWG…`](https://testnet.nearblocks.io/txns/3njZ8TizuLWGVwRyYRssbwJtKqgaa7d9omw7pm6CaBSu) |
+| 2 | `ft_transfer_call 1.20 USDC` — the order paid in advance, budget locked by the contract | [`61E1VSzpp1R7…`](https://testnet.nearblocks.io/txns/61E1VSzpp1R7qJDbvKKsEw6qMFCTxWCdKX4uxF5b7UwC) |
+| 3 | `accept_job 0.02 USDC/task` — reserved margin 0.18 and payroll budget 1.02 frozen | [`A7GSj3TjCdHJ…`](https://testnet.nearblocks.io/txns/A7GSj3TjCdHJJBSs2x9EvgMRLBDB9GbmHTDqDFdCnTyk) |
+| 4 | `hire alice` — hiring: the contract pays the token registration | [`EpuoLSes6Wyz…`](https://testnet.nearblocks.io/txns/EpuoLSes6WyzRDzRuoEvRBembYSECC3UUNRMUqWrHNfk) |
+| 5 | `hire bob` — hiring (2nd worker) | [`HXJYw8h4mVn3…`](https://testnet.nearblocks.io/txns/HXJYw8h4mVn3BzrfQLG3D9uet8N9QwgEsbcy9VbtrcSH) |
+| 6 | `hire chloe` — hiring (3rd worker) | [`woZbg8NMwuhA…`](https://testnet.nearblocks.io/txns/woZbg8NMwuhAfMjC7GCdJQxRUsKKg5GbEHanXKeoqHi) |
+| 7 | `pay_batch alice (4 tasks = 0.08 USDC)` — batch pay for 4 validated tasks | [`2tnSvgDbc8FK…`](https://testnet.nearblocks.io/txns/2tnSvgDbc8FKjop1kpYtje98qhFU4QGW4evdjzPPE9AM) |
+| 8 | `pay_batch bob (4 tasks = 0.08 USDC)` — batch pay (2nd worker) | [`DXdog27ZLJSg…`](https://testnet.nearblocks.io/txns/DXdog27ZLJSgSCiyaXNt1NGEpUQiZtphL3Wv8H5Q6Lzd) |
+| 9 | `pay_batch chloe (4 tasks = 0.08 USDC)` — batch pay (3rd worker) | [`4a57r1DJmcrg…`](https://testnet.nearblocks.io/txns/4a57r1DJmcrg2itCRyocpAjDTrf2dK7P3hjBoqXKgXeG) |
+| 10 | `reject minority` — justified, public rejection (minority answer) | [`9Z9YdcJZe541…`](https://testnet.nearblocks.io/txns/9Z9YdcJZe541U3eVAs4vp7pyLVRdTCsxMjBJeYCpNA93) |
+| 11 | `set_agent_key (agent signing key)` — the agent publishes its ticket-signing key | [`9UAEACZGqfUx…`](https://testnet.nearblocks.io/txns/9UAEACZGqfUxA6dpJ55ioMdxUSLZTUDNGcAJJ1pLunwM) |
+| 12 | `claim_unpaid (the worker claims their ticket)` — C-F14: silence means payment, signed ticket honored | [`Hmij56VviMDm…`](https://testnet.nearblocks.io/txns/Hmij56VviMDmcBbiCdCFSgCAoGUjpbyRwTDhPEpSGqrm) |
+| 13 | `deliver` — delivery, margin split 60/30/10 | [`6xcspUs9KEkK…`](https://testnet.nearblocks.io/txns/6xcspUs9KEkKutETQR9PtSWRiYJRbjs58FgRxNpRzGVj) |
+| 14 | `withdraw alice` — the worker cashes out in real USDC | [`aMgRgkYhAzBB…`](https://testnet.nearblocks.io/txns/aMgRgkYhAzBB1XKGd2nDGdDx2krjgVS6RGJ65hPteoK) |
 
-Le fichier `testnet-proof.json` du dépôt contient ces hachages et l'état de
-solvabilité, sans aucun secret.
+The `testnet-proof.json` file in the repository contains these hashes and the
+solvency state, with no secret.
 
 ### 5.2 Tests
 
-| Suite | Volume | Ce qu'elle prouve |
+| Suite | Volume | What it proves |
 |---|---|---|
-| Python (`make test`) | 47 tests | règles du contrat simulé, moteur de qualité, contrôles cachés, bon de travail signé (C-F14) |
-| Rust unitaires (`make test-contract`) | 22 tests (`VMContextBuilder`) | bornes de paie, plafonds, refus, renvoi justifié, double règlement |
-| Intégration (`make test-sandbox`) | 1 test sur sandbox NEAR réel | cycle complet, solvabilité `balanced: true` |
+| Python (`make test`) | 47 tests | rules of the simulated contract, quality engine, hidden checks, signed work ticket (C-F14) |
+| Rust unit tests (`make test-contract`) | 22 tests (`VMContextBuilder`) | pay bounds, caps, rejections, justified firing, double settlement |
+| Integration (`make test-sandbox`) | 1 test on a real NEAR sandbox | full cycle, solvency `balanced: true` |
 
-### 5.3 Onze attaques refusées, avec leur code exact
+### 5.3 Eleven attacks refused, with their exact code
 
-| Code d'erreur | Attaque refusée |
+| Error code | Attack refused |
 |---|---|
-| `ERR_PAY_ABOVE_MAX` | payer plus que le plafond de 0,10 USDC |
-| `ERR_PAY_BELOW_MIN` | payer moins que le plancher de 0,02 USDC |
-| `ERR_ALREADY_SETTLED` | payer deux fois la même paire (tâche, travailleur) |
-| `ERR_WORKER_FIRED` | payer un travailleur renvoyé |
-| `ERR_NOT_HIRED` | payer quelqu'un qui n'a pas été embauché |
-| `ERR_PAYROLL_BUDGET` | dépasser le budget de paie de la commande |
-| `ERR_FIRE_NOT_JUSTIFIED` | renvoyer un bon travailleur (compteurs de contrôles/exactitude insuffisants) |
-| `ERR_WORKER_CAP` | dépasser le plafond de 2 USDC/jour d'un travailleur |
-| `ERR_DAILY_CAP` | dépasser le plafond global de 20 USDC/jour |
-| `ERR_PAUSED` | embaucher alors que le coupe-circuit est fermé (×2) |
+| `ERR_PAY_ABOVE_MAX` | paying more than the 0.10 USDC ceiling |
+| `ERR_PAY_BELOW_MIN` | paying less than the 0.02 USDC floor |
+| `ERR_ALREADY_SETTLED` | paying the same (task, worker) pair twice |
+| `ERR_WORKER_FIRED` | paying a fired worker |
+| `ERR_NOT_HIRED` | paying someone who was not hired |
+| `ERR_PAYROLL_BUDGET` | exceeding the order's payroll budget |
+| `ERR_FIRE_NOT_JUSTIFIED` | firing a good worker (insufficient check/accuracy counters) |
+| `ERR_WORKER_CAP` | exceeding a worker's cap of 2 USDC/day |
+| `ERR_DAILY_CAP` | exceeding the global cap of 20 USDC/day |
+| `ERR_PAUSED` | hiring while the kill switch is engaged (×2) |
 
-Dix lignes pour onze attaques : `ERR_PAUSED` est refusée deux fois (coupe-circuit
-fermé à l'embauche, puis à une seconde tentative).
+Ten rows for eleven attacks: `ERR_PAUSED` is refused twice (kill switch engaged
+at hiring, then on a second attempt).
 
 ---
 
-## 6. Modèle économique (hypothèse, à remplacer par des mesures)
+## 6. Business model (assumption, to be replaced by measurements)
 
-Les chiffres ci-dessous viennent du cahier des charges et sont une **hypothèse de
-modèle**, pas une mesure de production. Ils sont posés explicitement comme
-hypothèses : la première chose à faire en conditions réelles est de les remplacer
-par les taux de succès, la durée de tâche et le taux de refus observés sur des
-commandes réelles.
+The figures below come from the specification and are a **model assumption**, not
+a production measurement. They are stated explicitly as assumptions: the first
+thing to do in real conditions is to replace them with the success rates, task
+duration and rejection rate observed on real orders.
 
-| Poste | Valeur | Commentaire |
+| Item | Value | Comment |
 |---|---|---|
-| Prix de vente par étiquette | 0,12 USDC | prix de vente au client |
-| Commandes | 1 000 étiquettes | hypothèse de volume mensuel |
-| Chiffre d'affaires | 120 USDC | 1 000 × 0,12 |
-| Tâches à réaliser | 3 750 | redondance 3 + 20 % de contrôles cachés |
-| Coût de la paie | 75 USDC | 3 750 × 0,02 |
-| Marge brute | 44 USDC (37 %) | 120 − 75 |
-| Marge avec pré-étiquetage LLM + statut senior | 81 USDC (68 %) | redondance moyenne 1,5 au lieu de 3 |
+| Sale price per label | 0.12 USDC | price charged to the client |
+| Orders | 1,000 labels | monthly volume assumption |
+| Revenue | 120 USDC | 1,000 × 0.12 |
+| Tasks to perform | 3,750 | redundancy 3 + 20% hidden checks |
+| Payroll cost | 75 USDC | 3,750 × 0.02 |
+| Gross margin | 45 USDC (37.5%) | 120 − 75 |
+| Margin with LLM pre-labeling + senior status | 82.5 USDC (69%) | average redundancy 1.5 instead of 3 |
 
-Ce que la table ne dit pas, et qui devra être mesuré : le taux d'accord entre
-travailleurs et contrôleurs cachés (fixe la redondance réelle), le taux de
-rejet (fixe la marge), le coût d'inférence pré-étiquetage et d'inférence de
-l'agent (payé sur la marge, plafonné par le contrat).
-
----
-
-## 7. Cinq objections, cinq réponses
-
-**1. La qualité est jugée hors chaîne, donc c'est centralisé.**
-Oui, et c'est un choix assumé : la *note* d'une étiquette ambiguë est une décision
-humaine ou modèle, pas une vérité cryptographique. Ce que la chaîne garantit,
-c'est la partie vérifiable : les bornes de paie, les plafonds, les compteurs de
-renvoi, la conservation des fonds, l'immuabilité des refus motivés. Concrètement,
-un agent qui triche sur la qualité perd son budget de paie et se fait renvoyer ; il
-ne peut pas payer au-dessus du plafond, ni dépasser 20 USDC/jour, ni escamoter un
-travailleur déjà réglé. La qualité est le seul maillon non vérifiable, et c'est
-précisément celui qui est le mieux contraint par les autres règles.
-
-**2. Pourquoi des humains alors que les LLM étiquettent ?**
-Parce que ce n'est pas le même travail. Un LLM étiquette bien le sentiment
-standard ; il est moins fiable sur les cas ambigus, les langues rares, les
-critiques qui citent un produit par sarcasme, et il n'a aucun moyen de dire
-« je ne sais pas ». Or c'est précisément le résidu ambigu qui décide de la
-qualité d'un modèle. L'humain, ici, n'est pas un coût : c'est la partie difficile
-et rare du travail, celle qu'on sous-traite à des gens. L'agent économique est
-l'inverse d'une plateforme de label crowdsourcing : il n'embauche que pour ce que
-les modèles ne font pas bien, et il paie proportionnellement à la rareté de la
-tâche.
-
-**3. Est-ce correct vis-à-vis des travailleurs ?**
-C'est la question à laquelle le contrat est censé répondre, et nous y avons
-répondu par des contraintes, pas par des promesses : plancher de 0,02 USDC garanti
-par le contrat, plafond de 2 USDC/jour par travailleur, refus toujours motivés et
-publics, renvoi impossible sans 5 contrôles et sous 60 % d'exactitude, et
-`claim_unpaid` pour réclamer soi-même une tâche validée quand l'agent se tait. Un
-travailleur n'a jamais besoin de wallet, de NEAR ni de gas : le contrat paie son
-`storage_deposit`. Ce qui reste à prouver, c'est le taux de rémunération réel
-au-dessus du plancher ; c'est une mesure, pas une promesse.
-
-**4. Pourquoi NEAR ?**
-Parce que les trois propriétés dont l'idée dépend sont natives ici : des comptes
-implicites (une clé Ed25519 suffit, aucune inscription, aucune transaction), des
-frais négligeables (à 0,02 USDC la tâche, les frais de paiement ne peuvent pas
-manger l'économie), et une exécution qui rend les règles crédibles. Sur une
-chaîne à frais élevés et à onboarding lourd, un salaire de 0,02 USDC n'existe pas.
-Et parce qu'un contrat NEAR peut recevoir l'USDC (NEP-141) et sortir l'argent
-en cross-contract avec callback : le paiement comme le travail se passent dans le
-même contrat.
-
-**5. Et les fermes à clics ?**
-Une ferme à clics, c'est un compte qui triche sur la qualité ; Hireclaw
-l'attaque frontalement, et c'est mesuré dans la démo : le robot tricheur (réponse en
-120 ms sur le même bouton) est détecté par la détection de réponses trop rapides, puis
-poursuivi par les contrôles cachés, et renvoyé à 5 contrôles / 0 %. Renoyer un
-travailleur légitime, lui, échoue (`ERR_FIRE_NOT_JUSTIFIED`). L'anti-triche
-n'améliore pas son revenu : les contrôles cachés et la règle de majorité portent
-la qualité, et un tricheur perd son poste au lieu de gagner de l'argent. Le
-frein structurel reste le taux de paie : à 0,02 USDC, l'unité de travail est si
-petite qu'une ferme industrialisée ne peut pas y vivre, alors qu'un humain bien
-outillé, en quelques minutes, peut.
+What the table does not say, and what will have to be measured: the agreement
+rate between workers and hidden checks (sets the real redundancy), the rejection
+rate (sets the margin), the cost of pre-labeling inference and of the agent's
+inference (paid from the margin, capped by the contract).
 
 ---
 
-## 8. Limites assumées
+## 7. Five objections, five answers
 
-- **La démo hors ligne simule la chaîne.** `make demo` rejoue un monde simulé
-  (horloge simulée, solde en micro-USDC tenu par le contrat simulé) pour être
-  déterministe et rejouable en moins de deux minutes. La preuve réelle est le
-  cycle testnet ci-dessus, pas la démo.
-- **L'URL publique est temporaire.** Le tunnel Cloudflare
-  (`beijing-gave-locking-examine.trycloudflare.com`) est un tunnel de session ; il
-  tombera. L'URL tailnet `http://100.120.194.92:8137/work` n'est stable que dans
-  le réseau de l'équipe. Le dépôt reste la source durable.
-- **Pas de méta-transaction pour `claim_unpaid`.** La réclamation exige encore
-  que le travailleur envoie lui-même une transaction (avec un compte approvisionné
-  en NEAR) ;
-  l'implémentation complète du bon de travail signé dans un portefeuille
-  navigateur n'est pas faite.
-- **Tâches photo et encaissement inter-chaînes non implémentés.** Le canal de
-  paiement est un NEP-141 unique sur NEAR testnet ; l'encaissement vers d'autres
-  chaînes et les tâches photo (capture, contrôle visuel) sont hors périmètre de
-  cette version.
-- **La solvabilité est vérifiée en testnet sur un seul cycle.** `balanced: true` a
-  été obtenu sur le job-0004 ; il reste à le rejouer sur plusieurs commandes
-  consécutives.
+**1. Quality is judged off-chain, so it is centralized.**
+Yes, and it is a deliberate choice: the *grade* of an ambiguous label is a human
+or model decision, not a cryptographic truth. What the chain guarantees is the
+verifiable part: the pay bounds, the caps, the firing counters, the conservation
+of funds, the immutability of justified rejections. Concretely, an agent that
+cheats on quality loses its payroll budget and gets fired; it cannot pay above
+the ceiling, nor exceed 20 USDC/day, nor make an already-settled worker
+disappear. Quality is the only link that is not verifiable, and it is precisely
+the one most tightly constrained by the other rules.
+
+**2. Why humans when LLMs can label?**
+Because it is not the same work. An LLM labels standard sentiment well; it is
+less reliable on ambiguous cases, rare languages, reviews that mention a product
+sarcastically, and it has no way to say "I don't know". Yet it is precisely the
+ambiguous residue that decides the quality of a model. The human here is not a
+cost: it is the hard and rare part of the work, the part that is outsourced to
+people. The economic agent is the opposite of a crowdsourced labeling platform:
+it hires only for what models do not do well, and it pays in proportion to the
+rarity of the task.
+
+**3. Is it fair to the workers?**
+This is the question the contract is meant to answer, and we answered it with
+constraints, not promises: 0.02 USDC floor guaranteed by the contract, cap of
+2 USDC/day per worker, rejections always justified and public, firing impossible
+without 5 checks and accuracy below 60%, and `claim_unpaid` to claim a validated
+task oneself when the agent stays silent. A worker never needs a wallet, NEAR or
+gas: the contract pays their `storage_deposit`. What remains to be proven is the
+real pay rate above the floor; that is a measurement, not a promise.
+
+**4. Why NEAR?**
+Because the three properties the idea depends on are native here: implicit
+accounts (an Ed25519 key is enough, no sign-up, no transaction), negligible fees
+(at 0.02 USDC per task, payment fees cannot eat the economics), and an execution
+that makes the rules credible. On a chain with high fees and heavy onboarding, a
+0.02 USDC wage does not exist. And because a NEAR contract can receive USDC
+(NEP-141) and send the money out cross-contract with a callback: the payment and
+the work both happen in the same contract.
+
+**5. What about click farms?**
+A click farm is an account that cheats on quality; Hireclaw attacks it head-on,
+and this is measured in the demo: the cheating bot (answer in 120 ms on the same
+button) is caught by the too-fast-answer detection, then pursued by the hidden
+checks, and fired at 5 checks / 0%. Firing a legitimate worker, on the other
+hand, fails (`ERR_FIRE_NOT_JUSTIFIED`). Cheating does not increase the cheater's
+income: the hidden checks and the majority rule carry the quality, and a cheater
+loses the job instead of earning money. The structural brake remains the pay
+rate: at 0.02 USDC the unit of work is so small that an industrialized farm
+cannot live on it, whereas a well-equipped human, in a few minutes, can.
 
 ---
 
-## 9. Reproduire en 5 commandes
+## 8. Known limits
+
+- **The offline demo simulates the chain.** `make demo` replays a simulated world
+  (simulated clock, micro-USDC balance kept by the simulated contract) so that it
+  is deterministic and replayable in under two minutes. The real proof is the
+  testnet cycle above, not the demo.
+- **The public URL is temporary.** The Cloudflare tunnel
+  (`beijing-gave-locking-examine.trycloudflare.com`) is a session tunnel; it will
+  go down. The tailnet URL `http://100.120.194.92:8137/work` is only stable inside
+  the team's network. The repository remains the durable source.
+- **No meta-transaction for `claim_unpaid`.** The claim still requires the worker
+  to send a transaction themselves (with an account funded in NEAR); the full
+  implementation of the signed work ticket in a browser wallet is not done.
+- **Photo tasks and cross-chain cash-out are not implemented.** The payment
+  channel is a single NEP-141 token on NEAR testnet; cash-out to other chains and
+  photo tasks (capture, visual check) are out of scope for this version.
+- **Solvency is verified on testnet over a single cycle.** `balanced: true` was
+  obtained on job-0004; it still has to be replayed over several consecutive
+  orders.
+
+---
+
+## 9. Reproduce in 5 commands
 
 ```sh
-git clone https://github.com/BaptisteFaisy/hireclaw && cd hireclaw
+git clone https://github.com/GaiaSG94/hireclaw && cd hireclaw
 python3 -m venv .venv && . .venv/bin/activate && pip install -e .
 
-make demo          # l'histoire complète hors ligne, déterministe, « INVARIANTS OK »
-make attack        # les 11 attaques, refusées avec leur code exact
-make test          # 47 tests Python
-make test-contract # 22 tests unitaires Rust (VMContextBuilder)
-make testnet-e2e   # cycle complet on-chain sur NEAR testnet (rejouable)
+make demo          # the full story offline, deterministic, "INVARIANTS OK"
+make attack        # the 11 attacks, refused with their exact code
+make test          # 47 Python tests
+make test-contract # 22 Rust unit tests (VMContextBuilder)
+make testnet-e2e   # full on-chain cycle on NEAR testnet (replayable)
 ```
 
-`make testnet-e2e` rejoue le cycle réel et réécrit `testnet-proof.json` : on peut
-constater soi-même `get_solvency` → `balanced: true` et les montants reçus par la
-travailleuse.
+`make testnet-e2e` replays the real cycle and rewrites `testnet-proof.json`: you
+can check for yourself `get_solvency` → `balanced: true` and the amounts received
+by the worker.

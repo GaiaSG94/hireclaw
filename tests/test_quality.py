@@ -8,7 +8,7 @@ from boss.dataset import Item
 from boss.errors import PatronError
 from boss.quality import QualityEngine
 
-CHOICES = ("positif", "négatif", "neutre")
+CHOICES = ("positive", "negative", "neutral")
 RULES = Rules(redundancy=3, min_golds_before_fire=5)
 
 
@@ -38,7 +38,7 @@ def test_majority_pays_two_and_rejects_one():
     decisions = []
     for worker in ("a", "b", "c"):
         task = eng.serve(worker)
-        decisions += eng.submit(worker, task.id, task and "positif", 1000, True)
+        decisions += eng.submit(worker, task.id, task and "positive", 1000, True)
     assert len(decisions) == 3
     assert sum(d.action == "pay" for d in decisions) >= 2
     assert eng.labels
@@ -47,7 +47,7 @@ def test_majority_pays_two_and_rejects_one():
 def test_five_answers_without_majority_are_all_paid_as_ambiguous():
     eng = engine(n_items=1)
     tasks = [eng.serve(f"w{i}") for i in range(5)]
-    choices = ["positif", "négatif", "neutre", "positif", "négatif"]
+    choices = ["positive", "negative", "neutral", "positive", "negative"]
     decisions = []
     for task, choice in zip(tasks, choices):
         decisions += eng.submit(task.worker, task.id, choice, 1500, True)
@@ -60,7 +60,7 @@ def test_too_fast_same_button_is_refused():
     decisions = []
     for _ in range(4):
         task = eng.serve("robot")
-        decisions += eng.submit("robot", task.id, "positif", 120, True)
+        decisions += eng.submit("robot", task.id, "positive", 120, True)
     assert any(d.reason == "too_fast" for d in decisions)
     assert eng.signals["robot"] >= 1
 
@@ -69,7 +69,7 @@ def test_bad_signature_is_refused():
     eng = engine()
     task = eng.serve("w1")
     try:
-        eng.submit("w1", task.id, "positif", 1000, False)
+        eng.submit("w1", task.id, "positive", 1000, False)
     except PatronError as exc:
         assert exc.code == "ERR_BAD_SIGNATURE"
     else:  # pragma: no cover

@@ -1,8 +1,8 @@
-"""Lecture seule du contrat déployé sur testnet : ce que voit /ledger est réel.
+"""Read-only access to the contract deployed on testnet: what /ledger shows is real.
 
-Aucune clé, aucune transaction : uniquement des `call_function` en `finality: final`
-sur le RPC public. Le fichier `testnet-deployment.json` (écrit par
-`scripts/deploy-testnet.mjs`) donne l'adresse du contrat.
+No key, no transaction: only `call_function` queries with `finality: final`
+on the public RPC. The `testnet-deployment.json` file (written by
+`scripts/deploy-testnet.mjs`) gives the contract address.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def deployment() -> dict | None:
 
 
 def view(contract: str, method: str, args: dict | None = None, *, rpc: str = RPC) -> Any:
-    """Un appel de vue NEAR, sans dépendance externe."""
+    """A NEAR view call, with no external dependency."""
     payload = {
         "jsonrpc": "2.0",
         "id": 1,
@@ -63,10 +63,10 @@ def _safe(contract: str, method: str, args: dict | None = None) -> Any:
 
 
 def state() -> dict:
-    """État réel du contrat testnet, mis en cache 5 secondes."""
+    """Real state of the testnet contract, cached for 5 seconds."""
     info = deployment()
     if not info:
-        return {"available": False, "reason": "testnet-deployment.json absent : lancer make testnet-deploy"}
+        return {"available": False, "reason": "testnet-deployment.json missing: run make testnet-deploy"}
     now = time.time()
     if _cache["data"] and now - _cache["at"] < CACHE_S:
         return _cache["data"]

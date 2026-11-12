@@ -1,4 +1,4 @@
-"""Empreintes canoniques : mêmes octets ici, dans le contrat et dans le navigateur."""
+"""Canonical hashes: same bytes here, in the contract and in the browser."""
 from __future__ import annotations
 
 import hashlib

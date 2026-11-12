@@ -1,4 +1,4 @@
-"""Un monde complet (contrat + agent + robots) que la démo et le site partagent."""
+"""A complete world (contract + agent + robots) shared by the demo and the site."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -72,7 +72,7 @@ class World:
         world.free_at = {r.key.account: clock.now() for r in robots}
         return world
 
-    # -------------------------------------------------------------------- boucle
+    # -------------------------------------------------------------------- loop
     def run(self, max_steps: int = 4000) -> "World":
         target = len(self.agent.item_ids)
         while max_steps > 0:
@@ -111,7 +111,7 @@ class World:
         self.steps += 1
         return True
 
-    # ------------------------------------------------------------------- lecture
+    # ------------------------------------------------------------------- reads
     def delivered(self) -> bool:
         return self.contract.jobs[self.job_id].state == "delivered"
 

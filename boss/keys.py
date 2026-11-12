@@ -1,4 +1,4 @@
-"""Clés Ed25519 : le travailleur existe avec une simple paire de clés (compte implicite)."""
+"""Ed25519 keys: a worker exists with a plain key pair (implicit account)."""
 from __future__ import annotations
 
 from cryptography.exceptions import InvalidSignature
@@ -9,7 +9,7 @@ from .hashing import canonical
 
 
 class Key:
-    """Compte implicite NEAR = hexadécimal de la clé publique (64 caractères)."""
+    """NEAR implicit account = hex of the public key (64 characters)."""
 
     def __init__(self, private: Ed25519PrivateKey | None = None) -> None:
         self._private = private or Ed25519PrivateKey.generate()

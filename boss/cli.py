@@ -1,4 +1,4 @@
-"""Point d'entrée `boss` : démo, attaques, site."""
+"""`boss` entry point: demo, attacks, website."""
 from __future__ import annotations
 
 import sys
@@ -19,7 +19,7 @@ def main(argv: list[str] | None = None) -> int:
         from .webapp import main as run
 
         return run(args[1:])
-    print("usage : boss [demo|attack|web --port 8137]")
+    print("usage: boss [demo|attack|web --port 8137]")
     return 2
 
 

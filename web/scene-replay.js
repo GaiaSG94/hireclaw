@@ -1,11 +1,8 @@
-/* Hireclaw — branchement du rejeu RÉEL sur la scène verrouillée (V10).
-   Chargé après v9-ui.js. Si GET /api/replay répond, chaque étape du scénario
-   embarqué est annotée avec l'événement réel du registre (seq, kind, détail,
-   motif, montant, nom du robot). Si l'API est absente (page ouverte hors ligne,
-   en fichier local), le scénario embarqué reste inchangé : rien ne casse.
-
-   Aucune modification du moteur : on mutate le tableau STEPS partagé
-   (window.HC9.STEPS), que le moteur relit à chaque étape. */
+/* Hireclaw — plugs the REAL replay into the scene. Loaded after v9-ui.js.
+   When GET /api/replay answers, each step of the built-in scenario is annotated
+   with the matching ledger event (seq, kind, detail, reason, amount, robot name).
+   When the API is absent (static copy, offline), the built-in scenario is left
+   untouched. The engine is not modified: we mutate the shared STEPS array. */
 (function () {
   "use strict";
 
@@ -19,7 +16,7 @@
   };
 
   function fxOf(ev) {
-    if ("fx" in ev) return ev.fx;           // déjà calculé par le serveur (null = aucun fx)
+    if ("fx" in ev) return ev.fx;           // already computed by the server (null = no fx)
     if (ev.kind === "reject") return /too_fast/.test(ev.reason || "") ? "fast" : "minority";
     return KIND_FX[ev.kind] || null;
   }
@@ -27,11 +24,11 @@
   function usdc(micro) { return (Number(micro) / 1e6).toFixed(2); }
 
   function cleanDetail(ev) {
-    // un refus porte "t00094 / <compte>" : on préfère "t00094 · dora"
+    // a rejection carries "t00094 / <account>": we show "dora · t00094"
     if (ev.kind === "reject" && ev.who) {
       return ev.who + " · " + String(ev.detail || "").split(" / ")[0];
     }
-    if (ev.kind === "fire" && ev.who) return ev.who;   // le détail est le compte complet (64 hex)
+    if (ev.kind === "fire" && ev.who) return ev.who;   // the detail is the full account (64 hex)
     return ev.detail || "";
   }
 
@@ -48,8 +45,8 @@
     el.textContent = text;
     el.style.color = warn ? "#b42318" : "#0a0a0b";
     el.title = warn
-      ? "Le rejeu réel diffère du scénario embarqué : le scénario embarqué est affiché."
-      : "Chaque étape est annotée avec l'événement réel du registre (GET /api/replay).";
+      ? "The real replay differs from the built-in scenario: the built-in scenario is shown."
+      : "Each step is annotated with the real ledger event (GET /api/replay).";
   }
 
   function annotate(steps, events) {
@@ -57,7 +54,7 @@
     var hits = 0;
     steps.forEach(function (s, i) {
       var ev = null;
-      // si l étape nomme un humain (dora, eli), on prend son événement à lui
+      // when the step names a human (dora, eli), take that person's own event
       var named = /^(alice|bob|chloe|dora|eli)$/.test(s.b || "") ? s.b : null, pick = -1;
       for (var j = 0; j < events.length; j++) {
         if (used[j] || fxOf(events[j]) !== s.fx) continue;
@@ -70,11 +67,11 @@
       hits++;
       var real = [];
       if (ev.kind) real.push(ev.kind);
-      if (typeof ev.seq === "number") real.push("registre #" + ev.seq);
+      if (typeof ev.seq === "number") real.push("ledger #" + ev.seq);
       if (ev.amount) real.push(usdc(ev.amount) + " USDC");
       var det = cleanDetail(ev);
       if (det) real.push(det);
-      if (ev.reason) real.push("motif : " + ev.reason);
+      if (ev.reason) real.push("reason: " + ev.reason);
       s.code = s.code + " · " + real.join(" · ");
       s.real = ev;
       var code = document.querySelector('#timeline li[data-i="' + i + '"] code');
@@ -84,25 +81,26 @@
   }
 
   function sameMoney(job) {
-    // le scénario embarqué joue 1.20 de budget et 0.98 de paie : on vérifie
-    // (la marge réservée retombe à 0 après deliver, elle n'est pas comparable ici)
+    // the built-in scenario plays a 1.20 budget and 0.98 of payroll: check both
+    // (the reserved margin drops to 0 after deliver, so it cannot be compared here)
     return Number(job.budget) === 1200000 && Number(job.payroll_spent) === 980000;
   }
 
+  if (/github\.io$/.test(location.hostname) || location.protocol === "file:") return;   // static copy: no API
   fetch(ENDPOINT).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
     if (!data || !data.events || !window.HC9 || !window.HC9.STEPS) return;
     var steps = window.HC9.STEPS;
     var job = data.job || {};
     if (!sameMoney(job)) {
-      badge("rejeu réel · montants différents", true);
+      badge("real replay · amounts differ", true);
       window.HC9_REAL = data;
       return;
     }
     var hits = annotate(steps, data.events);
     var sol = data.solvency || {};
     var ok = (data.attacks || []).filter(function (a) { return a.ok; }).length;
-    badge("rejeu réel · " + hits + "/" + steps.length + " étapes au registre · " + ok + "/" +
-      (data.attacks || []).length + " attaques refusées · " + (sol.balanced ? "balanced: true" : "C-I1 VIOLÉ"), false);
+    badge("real replay · " + hits + "/" + steps.length + " steps on the ledger · " + ok + "/" +
+      (data.attacks || []).length + " attacks refused · " + (sol.balanced ? "balanced: true" : "C-I1 VIOLATED"), false);
     window.HC9_REAL = data;
-  }).catch(function () { /* hors ligne : scénario embarqué, aucun badge */ });
+  }).catch(function () { /* offline: built-in scenario, no badge */ });
 })();

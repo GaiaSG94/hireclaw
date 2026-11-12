@@ -1,33 +1,33 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hireclaw — une IA t'embauche</title>
+<title>Hireclaw — an AI hires you</title>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <header>
-  <div class="brand">Hireclaw <span>agent-patron</span></div>
+  <div class="brand">Hireclaw <span>the AI boss</span></div>
   <nav>
-    <a href="/scene">Scène</a>
-    <a href="/work" data-view="work">Travailler</a>
-    <a href="/boss" data-view="boss">Patron</a>
-    <a href="/ledger" data-view="ledger">Registre</a>
-    <a href="/demo" data-view="demo">Démo</a>
+    <a href="/scene">Scene</a>
+    <a href="/work" data-view="work">Work</a>
+    <a href="/boss" data-view="boss">Boss</a>
+    <a href="/ledger" data-view="ledger">Ledger</a>
+    <a href="/demo" data-view="demo">Demo</a>
     <a href="/testnet" data-view="testnet">Testnet</a>
     <a href="/code" data-view="code">Code</a>
-    <a href="/video" data-view="video">Vidéo</a>
+    <a href="/video" data-view="video">Video</a>
   </nav>
 </header>
 
 <main>
   <section id="view-work" class="view">
     <div class="card">
-      <h1>Une IA t'a embauché.</h1>
-      <p class="muted">Pas d'inscription : ta paire de clés est créée dans ce navigateur.
-        Chaque tâche payée arrive en USDC de test, sur ton compte implicite.</p>
-      <p class="mono small" id="identity">clé…</p>
+      <h1>An AI just hired you.</h1>
+      <p class="muted">No sign-up: your key pair is created in this browser.
+        Every paid task lands as test USDC on your implicit account.</p>
+      <p class="mono small" id="identity">key…</p>
     </div>
 
     <div class="card hidden" id="task-card">
@@ -37,114 +37,114 @@
     </div>
 
     <div class="card" id="idle-card">
-      <p id="idle-text" class="muted">Préparation de la première tâche…</p>
+      <p id="idle-text" class="muted">Preparing your first task…</p>
     </div>
 
     <div class="card" id="chain-card">
-      <p class="muted small" id="chain-line">Contrat testnet : lecture…</p>
-      <button id="withdraw-btn" class="hidden">Retirer mes gains sur mon compte</button>
+      <p class="muted small" id="chain-line">Testnet contract: reading…</p>
+      <button id="withdraw-btn" class="hidden">Withdraw my earnings to my account</button>
       <p class="muted small hidden" id="withdraw-note"></p>
     </div>
 
     <div class="card stats">
-      <div><span>Gains du jour</span><strong id="earned">0.00 USDC</strong></div>
-      <div><span>Plafond</span><strong id="cap">—</strong></div>
-      <div><span>Tâches payées</span><strong id="paid">0</strong></div>
-      <div><span>Contrôles</span><strong id="golds">0</strong></div>
+      <div><span>Earned today</span><strong id="earned">0.00 USDC</strong></div>
+      <div><span>Daily cap</span><strong id="cap">—</strong></div>
+      <div><span>Tasks paid</span><strong id="paid">0</strong></div>
+      <div><span>Checks</span><strong id="golds">0</strong></div>
     </div>
   </section>
 
   <section id="view-boss" class="view hidden">
-    <h1>Tableau du patron</h1>
+    <h1>Boss dashboard</h1>
     <div class="grid" id="boss-head"></div>
-    <h2>Progression</h2>
+    <h2>Progress</h2>
     <div class="progress"><div id="progress-bar"></div></div>
     <p class="muted small" id="progress-text"></p>
-    <h2>Travailleurs</h2>
+    <h2>Workers</h2>
     <table id="workers"></table>
-    <h2>Fil des paiements</h2>
+    <h2>Payment feed</h2>
     <table id="payments"></table>
-    <h2>Décisions</h2>
+    <h2>Decisions</h2>
     <ul id="decisions" class="list"></ul>
   </section>
 
   <section id="view-ledger" class="view hidden">
-    <h1>Registre public</h1>
-    <p class="muted">Tout paiement, tout refus motivé, tout compteur est public.
-      Les règles ci-dessous sont appliquées par le contrat, pas par l'agent.</p>
+    <h1>Public ledger</h1>
+    <p class="muted">Every payment, every justified rejection, every counter is public.
+      The rules below are enforced by the contract, not by the agent.</p>
     <div class="grid" id="rules"></div>
-    <h2>Contrat réel (testnet)</h2>
-    <p class="muted small" id="chain-note">Lecture en direct du contrat déployé, sans clé.</p>
+    <h2>Live contract (testnet)</h2>
+    <p class="muted small" id="chain-note">Read live from the deployed contract, no key needed.</p>
     <div class="grid" id="chain"></div>
     <table id="chain-ledger"></table>
-    <h2>Écritures (démo locale)</h2>
+    <h2>Entries (local demo)</h2>
     <table id="ledger"></table>
   </section>
 </main>
 
   <section id="view-demo" class="view hidden">
-    <h1>La démo, rejouée en direct</h1>
-    <p class="muted">Chaque chargement rejoue le scénario déterministe (graine fixe) :
-      commande payée d'avance, cinq robots, contrôles cachés, majorités, renvois,
-      onze attaques refusées, livraison et invariants.</p>
-    <h2>Commande</h2>
+    <h1>The demo, replayed live</h1>
+    <p class="muted">Every page load replays the deterministic scenario (fixed seed):
+      a prepaid job, five bots, hidden checks, majority votes, firings,
+      eleven rejected attacks, delivery and invariants.</p>
+    <h2>Job</h2>
     <div class="grid" id="demo-head"></div>
-    <h2>Équipe embauchée</h2>
+    <h2>Crew hired</h2>
     <div id="demo-crew"></div>
-    <h2>Travailleurs à la clôture</h2>
+    <h2>Workers at close</h2>
     <div id="demo-workers"></div>
-    <h2>Renvois</h2>
+    <h2>Firings</h2>
     <p id="demo-fired" class="muted"></p>
-    <h2>Attaques refusées par le contrat</h2>
+    <h2>Attacks rejected by the contract</h2>
     <div id="demo-attacks"></div>
-    <h2>Livraison, marge et conservation</h2>
+    <h2>Delivery, margin and conservation</h2>
     <div class="grid" id="demo-close"></div>
   </section>
 
   <section id="view-testnet" class="view hidden">
-    <h1>Contrat déployé sur NEAR testnet</h1>
-    <p class="muted">Ce qui suit est lu en direct de la chaîne et du fichier de preuves
-      <code>testnet-proof.json</code>. Aucune clé n'est utilisée par cette page.</p>
-    <h2>Déploiement</h2>
+    <h1>Contract deployed on NEAR testnet</h1>
+    <p class="muted">Everything below is read live from the chain and from the proof file
+      <code>testnet-proof.json</code>. This page uses no key.</p>
+    <h2>Deployment</h2>
     <div class="grid" id="chain-head"></div>
-    <h2>Règles en vigueur on-chain</h2>
+    <h2>Rules in force on-chain</h2>
     <div class="grid" id="chain-rules"></div>
-    <h2>Solvabilité lue sur la chaîne</h2>
+    <h2>Solvency read from the chain</h2>
     <div class="grid" id="chain-live"></div>
-    <h2>Transactions de preuve</h2>
+    <h2>Proof transactions</h2>
     <div id="chain-tx"></div>
-    <h2>Interface du contrat (ABI)</h2>
-    <p class="muted small">ABI du build local. Le contrat déployé sur testnet expose une méthode
-      de moins (<code>promote</code>, statut senior) : elle attend le prochain redéploiement,
-      le compte contrat n'ayant plus assez de NEAR libre pour payer le stockage des deux codes.</p>
+    <h2>Contract interface (ABI)</h2>
+    <p class="muted small">ABI of the local build. The contract deployed on testnet exposes one
+      method fewer (<code>promote</code>, senior status): it ships with the next redeployment,
+      as the contract account no longer holds enough free NEAR to pay storage for both binaries.</p>
     <p class="muted small" id="chain-abi-note"></p>
     <div id="chain-abi"></div>
   </section>
 
   <section id="view-code" class="view hidden">
-    <h1>Le code</h1>
-    <p class="muted">Inventaire réel du dépôt : fichiers, lignes, limites respectées,
-      tests. Le lien pointe vers le dépôt GitHub public.</p>
-    <h2>Dépôt</h2>
+    <h1>The code</h1>
+    <p class="muted">Actual inventory of the repository: files, lines, limits met,
+      tests. The link points to the public GitHub repository.</p>
+    <h2>Repository</h2>
     <div class="grid" id="code-head"></div>
-    <h2>Tests et règles</h2>
+    <h2>Tests and rules</h2>
     <div class="grid" id="code-tests"></div>
-    <h2>Par langage</h2>
+    <h2>By language</h2>
     <div id="code-files"></div>
-    <h2>Fichier par fichier</h2>
+    <h2>File by file</h2>
     <div id="code-tree"></div>
     <h2>Documentation (README)</h2>
     <pre class="readme" id="code-readme"></pre>
   </section>
 
   <section id="view-video" class="view hidden">
-    <h1>La démo en vidéo</h1>
-    <p class="muted">85 secondes, capturées sur le site réel : le visiteur travaille et est payé,
-      le tableau du patron, la démo déterministe avec ses onze attaques refusées,
-      le contrat testnet et le code.</p>
+    <h1>The demo on video</h1>
+    <p class="muted">85 seconds, recorded on the live site: the visitor works and gets paid,
+      the boss dashboard, the deterministic demo with its eleven rejected attacks,
+      the testnet contract and the code.</p>
     <video controls preload="metadata" playsinline>
       <source src="/media/demo.mp4" type="video/mp4">
-      Votre navigateur ne lit pas la vidéo : <a href="/media/demo.mp4">télécharger demo.mp4</a>.
+      Your browser cannot play this video: <a href="/media/demo.mp4">download demo.mp4</a>.
     </video>
   </section>
 

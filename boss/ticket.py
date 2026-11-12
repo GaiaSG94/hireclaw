@@ -1,8 +1,8 @@
-"""Le bon de travail signé : la preuve que le patron doit une tâche à un travailleur.
+"""The signed work ticket: proof that the boss owes a worker for a task.
 
-Émis par l'agent au moment où il refuse ou tarde à payer ; le contrat peut ensuite
-être forcé à payer via `claim_unpaid` une fois le délai écoulé. « Le silence vaut
-paiement » : c'est la protection du travailleur contre un patron défaillant.
+Issued by the agent when it refuses or is slow to pay; the contract can then
+be forced to pay through `claim_unpaid` once the delay has elapsed. "Silence means
+payment": this is the worker's protection against a defaulting boss.
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from .keys import Key, verify
 
 @dataclass(frozen=True)
 class Ticket:
-    """Bon de travail : qui, quoi, combien, signé par qui."""
+    """Work ticket: who, what, how much, signed by whom."""
 
     job_id: str
     task_id: str
@@ -48,7 +48,7 @@ class Ticket:
 
 def issue(key: Key, job_id: str, task_id: str, worker: str, amount: int, reason: str,
           issued_ms: int) -> Ticket:
-    """L'agent signe le bon avec sa clé d'appel de fonction (jamais un accès total)."""
+    """The agent signs the ticket with its function-call key (never full access)."""
     payload = {
         "job_id": job_id, "task_id": task_id, "worker": worker, "amount": amount,
         "reason": reason, "issued_ms": issued_ms, "agent": key.account,
@@ -57,7 +57,7 @@ def issue(key: Key, job_id: str, task_id: str, worker: str, amount: int, reason:
 
 
 def check(ticket: Ticket, agent_pubkey: str) -> bool:
-    """Le contrat vérifie la signature avant de payer : ni montant, ni destinataire modifiables."""
+    """The contract verifies the signature before paying: neither amount nor recipient can change."""
     return verify(agent_pubkey, ticket.payload(), ticket.signature)
 
 

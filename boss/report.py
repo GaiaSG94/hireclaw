@@ -1,9 +1,9 @@
-"""Rapports servis par le site : tout ce qui a été construit, en données.
+"""Reports served by the site: everything that was built, as data.
 
-Trois sources, aucune clé, aucune écriture :
-- `demo_report()`     : rejoue la démo déterministe et la suite d'attaques.
-- `testnet_report()`  : état réel du contrat testnet + transactions de preuve.
-- `code_report()`     : inventaire du dépôt, limites de taille, empreinte du WASM.
+Three sources, no key, no write:
+- `demo_report()`     : replays the deterministic demo and the attack suite.
+- `testnet_report()`  : real state of the testnet contract + proof transactions.
+- `code_report()`     : repo inventory, size limits, WASM hash.
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ def _cached(key: str, seconds: int, build) -> Any:
 
 
 def readme_text() -> str:
-    """Le README tel quel : la documentation fait partie du site."""
+    """The README as is: the documentation is part of the site."""
     path = ROOT / "README.md"
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
@@ -51,17 +51,17 @@ def _git(*args: str) -> str:
 
 
 def _fired_names(world) -> list[str]:
-    """Les renvois réellement inscrits au registre.
+    """The firings actually recorded in the ledger.
 
-    `agent.manage()` renvoie une liste vide une fois `world.run()` terminé : le
-    renvoi a déjà eu lieu pendant la boucle. La source de vérité est le registre.
+    `agent.manage()` returns an empty list once `world.run()` is over: the
+    firing already happened inside the loop. The ledger is the source of truth.
     """
     names = {r.key.account: r.name for r in world.robots}
     return [names.get(e["detail"], e["detail"][:8])
             for e in world.contract.get_ledger(limit=10_000, kind="fire")]
 
 
-# ----------------------------------------------------------------------- démo
+# ----------------------------------------------------------------------- demo
 def demo_report() -> dict:
     return _cached("demo", 300, _demo_report)
 
@@ -117,10 +117,10 @@ def _demo_report() -> dict:
     return report
 
 
-# ---------------------------------------------------------------------- rejeu
-# Correspondance kind du registre -> fx du front (HANDOFF-CLAUDE.md) et étape du
-# rail (0 commande, 1 marge, 2 embauche, 3 contrôles, 4 majorité, 5 paie,
-# 6 refus, 7 renvoi, 8 livraison).
+# ---------------------------------------------------------------------- replay
+# Mapping from ledger kind -> frontend fx (HANDOFF-CLAUDE.md) and rail stage
+# (0 order, 1 margin, 2 hire, 3 hidden checks, 4 majority, 5 payroll,
+# 6 reject, 7 fire, 8 delivery).
 KIND_FX = {"order": "order", "accept": "margin", "hire": "hire", "payroll": "pay",
            "fire": "fire", "sale": "deliver", "margin": "split", "claim": "pay",
            "cost": "margin"}
@@ -131,7 +131,7 @@ KIND_STAGE = {"order": 0, "accept": 1, "hire": 2, "payroll": 5, "reject": 6,
 
 
 def _event_fx(kind: str, reason: str) -> str | None:
-    """kind -> fx du front. Les refus se distinguent par leur motif."""
+    """kind -> frontend fx. Rejections are told apart by their reason."""
     if kind == "reject":
         if "too_fast" in (reason or ""):
             return "fast"
@@ -142,10 +142,10 @@ def _event_fx(kind: str, reason: str) -> str | None:
 
 
 def _replay_events(contract, names: dict) -> list[dict]:
-    """Le registre intégral, annoté : étape du rail, fx, nom du robot concerné.
+    """The full ledger, annotated: rail stage, fx, name of the robot involved.
 
-    Les clés Ed25519 sont regénérées à chaque run : on traduit les comptes en
-    noms de robots pour que l'interface reste lisible d'un appel à l'autre.
+    Ed25519 keys are regenerated on every run: accounts are translated into
+    robot names so the interface stays readable from one call to the next.
     """
     events = []
     prefix = {account[:8]: name for account, name in names.items()}
@@ -165,8 +165,8 @@ def _replay_events(contract, names: dict) -> list[dict]:
 
 
 def replay_report() -> dict:
-    """Le rejeu déterministe complet : registre annoté (stage + fx), attaques,
-    solvabilité, livraison, invariants. Source de /api/replay."""
+    """The full deterministic replay: annotated ledger (stage + fx), attacks,
+    solvency, delivery, invariants. Source of /api/replay."""
     return _cached("replay", 300, _replay_report)
 
 
@@ -268,7 +268,7 @@ def _code_report() -> dict:
             "limit_fn": MAX_FN_LINES,
         },
         "repo": {
-            "github": "https://github.com/BaptisteFaisy/hireclaw",
+            "github": "https://github.com/GaiaSG94/hireclaw",
             "commit": _git("rev-parse", "--short", "HEAD"),
             "subject": _git("log", "-1", "--pretty=%s"),
             "date": _git("log", "-1", "--pretty=%cd", "--date=format:%Y-%m-%d %H:%M"),

@@ -1,13 +1,13 @@
-"""Vues du contrat : lecture seule et invariants, sans aucune écriture d'état.
+"""Contract views: read-only queries and invariants, with no state write at all.
 
-Découpé depuis `contract.py` pour tenir la limite de 500 lignes par fichier.
-Chaque fonction prend le contrat en premier argument ; `Contract` délègue vers ici.
+Split out of `contract.py` to stay under the 500-lines-per-file limit.
+Each function takes the contract as first argument; `Contract` delegates here.
 """
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # évite l'import circulaire à l'exécution
+if TYPE_CHECKING:  # avoids the circular import at runtime
     from .contract import Contract
 
 
@@ -29,7 +29,7 @@ def workers_table(contract: "Contract") -> list[dict]:
 
 
 def get_solvency(contract: "Contract") -> dict:
-    """C-I1 : le solde doit toujours égaler la somme des engagements."""
+    """C-I1: the balance must always equal the sum of the commitments."""
     open_jobs = [j for j in contract.jobs.values() if j.open]
     held = sum(j.payroll_left + j.margin_reserved for j in open_jobs)
     return {
@@ -49,17 +49,17 @@ def get_solvency(contract: "Contract") -> dict:
 def check_invariants(contract: "Contract") -> list[str]:
     problems: list[str] = []
     if contract.balance < 0:
-        problems.append(f"solde négatif : {contract.balance}")
+        problems.append(f"negative balance: {contract.balance}")
     for job in contract.jobs.values():
         if job.payroll_spent > job.payroll_budget:
-            problems.append(f"{job.id}: paie {job.payroll_spent} > budget {job.payroll_budget}")
+            problems.append(f"{job.id}: payroll {job.payroll_spent} > budget {job.payroll_budget}")
         if job.payroll_budget < 0 or job.margin_reserved < 0:
-            problems.append(f"{job.id}: budget ou marge négatif")
+            problems.append(f"{job.id}: negative budget or margin")
     solvency = get_solvency(contract)
     if contract.balance != solvency["sum"]:
-        problems.append(f"conservation : solde {contract.balance} != {solvency['sum']}")
+        problems.append(f"conservation: balance {contract.balance} != {solvency['sum']}")
     if any(v < 0 for v in contract.withdrawable.values()):
-        problems.append("versement en attente négatif")
+        problems.append("negative pending payout")
     if any(v < 0 for v in contract.pending_out.values()):
-        problems.append("transfert en vol négatif")
+        problems.append("negative in-flight transfer")
     return problems

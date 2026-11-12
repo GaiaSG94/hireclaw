@@ -1,0 +1,7 @@
+# Render blueprint: New -> Blueprint -> pick this repository.
+services:
+  - type: web
+    name: hireclaw
+    runtime: docker
+    plan: free
+    healthCheckPath: /scene

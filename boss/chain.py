@@ -1,8 +1,8 @@
-"""Client du relais testnet : le site paie pour de vrai, sans jamais toucher une clé.
+"""Testnet relay client: the site pays for real, without ever touching a key.
 
-Le relais (`scripts/relay.mjs`, 127.0.0.1:8790) détient la clé de l'agent et signe
-les transactions. Ce module ne fait que du HTTP local : si le relais est absent,
-le site continue de tourner en mode démo locale (aucune erreur côté visiteur).
+The relay (`scripts/relay.mjs`, 127.0.0.1:8790) holds the agent key and signs
+the transactions. This module only does local HTTP: if the relay is missing,
+the site keeps running in local demo mode (no error on the visitor side).
 """
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def available() -> bool:
 
 
 def site_job() -> str | None:
-    """La commande ouverte dédiée au site, sinon la dernière vue par le relais."""
+    """The open order dedicated to the site, else the last one seen by the relay."""
     state = _get("/state")
     if not state:
         return None
@@ -75,12 +75,12 @@ def chain_state() -> dict:
 
 
 def hire(worker: str) -> dict:
-    """Inscription on-chain du travailleur (idempotent, y compris ERR_ALREADY_HIRED)."""
+    """On-chain worker registration (idempotent, including ERR_ALREADY_HIRED)."""
     return _post("/hire", {"worker": worker})
 
 
 def pay(job_id: str, items: list[dict]) -> dict:
-    """Paie un lot de tâches validées (le relais découpe en lots de 10)."""
+    """Pays a batch of validated tasks (the relay splits into batches of 10)."""
     return _post("/pay", {"job_id": job_id, "items": items})
 
 
@@ -90,7 +90,7 @@ def reject(job_id: str, task_id: str, worker: str, reason: str, gold: bool = Fal
 
 
 def withdraw(ticket: dict) -> dict:
-    """Ordre de retrait signé par le travailleur ; le relais paie le gas."""
+    """Withdrawal order signed by the worker; the relay pays the gas."""
     return _post("/withdraw", {"ticket": ticket})
 
 

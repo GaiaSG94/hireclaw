@@ -1,4 +1,4 @@
-"""Erreurs explicites : chaque refus du contrat porte un code stable, public."""
+"""Explicit errors: every contract refusal carries a stable, public code."""
 from __future__ import annotations
 
 
@@ -8,7 +8,7 @@ class PatronError(Exception):
         self.detail = detail
         super().__init__(f"{code}: {detail}" if detail else code)
 
-    def __str__(self) -> str:  # pragma: no cover - confort d'affichage
+    def __str__(self) -> str:  # pragma: no cover - display convenience
         return self.code if not self.detail else f"{self.code} ({self.detail})"
 
 

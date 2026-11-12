@@ -1,4 +1,4 @@
-"""L'agent-patron : sert les tâches, juge, paie, embauche, renvoie, livre."""
+"""The boss agent: serves tasks, judges, pays, hires, fires, delivers."""
 from __future__ import annotations
 
 from typing import Any, Iterable
@@ -11,7 +11,7 @@ from .model import FIRED
 from .quality import Decision, QualityEngine, Task
 from .ticket import Ticket, issue
 
-INFERENCE_COST_PER_CHECK = 800  # 0,0008 USDC par contrôle automatique
+INFERENCE_COST_PER_CHECK = 800  # 0.0008 USDC per automated check
 
 
 class BossAgent:
@@ -28,7 +28,7 @@ class BossAgent:
         self.payments = 0
         self.rejections = 0
 
-    # ------------------------------------------------------------------ gestion
+    # ------------------------------------------------------------------ management
     def accept(self, job_id: str, pay_per_task: int | None = None) -> None:
         pay = pay_per_task if pay_per_task is not None else self.contract.rules.task_pay_min
         self.contract.accept_job(job_id, pay, sha256_hex(self.golds))
@@ -43,7 +43,7 @@ class BossAgent:
             return True
         return job.payroll_left > job.budget * 5 // 100
 
-    # ------------------------------------------------------------------ service
+    # ------------------------------------------------------------------ serving
     def serve(self, worker: str) -> Task | None:
         record = self.contract.workers.get(worker)
         if record is None or record.status == FIRED:
@@ -51,7 +51,7 @@ class BossAgent:
         return self.engine.serve(worker, self.contract.now_ms(), allow_gold=self.gold_budget_ok())
 
     def gold_budget_ok(self) -> bool:
-        """Gestion de trésorerie : on garde 20 % du budget de paie pour finir les éléments."""
+        """Cash management: keep 20% of the payroll budget to finish the items."""
         job = self.contract.jobs.get(self.first_job())
         if job is None:
             return True
@@ -63,7 +63,7 @@ class BossAgent:
             if self.contract.jobs else 0
         return card
 
-    # ------------------------------------------------------------------ réponses
+    # ------------------------------------------------------------------ answers
     def submit(self, worker: str, task_id: str, choice: str, latency_ms: int, signature: str,
                job_id: str | None = None) -> dict:
         payload = answer_payload(worker, task_id, choice, latency_ms)
@@ -94,8 +94,8 @@ class BossAgent:
                                       job_id=job_id, actor=self.contract.agent)
         return out
 
-    def issue_ticket(self, job_id: str, task_id: str, worker: str, reason: str = "non payée à temps") -> Ticket:
-        """Bon de travail signé : si le patron se tait, le travailleur peut réclamer."""
+    def issue_ticket(self, job_id: str, task_id: str, worker: str, reason: str = "not paid in time") -> Ticket:
+        """Signed work ticket: if the boss stays silent, the worker can claim."""
         job = self.contract.jobs[job_id]
         return issue(self.key, job_id, task_id, worker, job.pay_per_task, reason,
                      self.contract.now_ms())
@@ -103,7 +103,7 @@ class BossAgent:
     def first_job(self) -> str:
         return next(iter(self.contract.jobs))
 
-    # ------------------------------------------------------------------- renvois
+    # ------------------------------------------------------------------- firing
     def manage(self) -> list[str]:
         events: list[str] = []
         for account, record in list(self.contract.workers.items()):
@@ -113,19 +113,19 @@ class BossAgent:
             if record.golds >= self.contract.rules.min_golds_before_fire and \
                     record.accuracy_pct < self.contract.rules.fire_below_accuracy_pct:
                 self.contract.fire(account)
-                events.append(f"renvoi {account[:8]} ({record.accuracy_pct}% sur {record.golds} contrôles)")
+                events.append(f"fired {account[:8]} ({record.accuracy_pct}% on {record.golds} hidden checks)")
         return events
 
-    # ----------------------------------------------------------------- livraison
+    # ----------------------------------------------------------------- delivery
     def deliver(self, job_id: str) -> dict:
         job = self.contract.jobs[job_id]
         result = {iid: label for iid, label in self.engine.validated.items() if iid in self.item_ids}
         if len(result) < job.n_items:
-            raise RuntimeError(f"livraison incomplète : {len(result)}/{job.n_items}")
+            raise RuntimeError(f"incomplete delivery: {len(result)}/{job.n_items}")
         self.contract.deliver(job_id, sha256_hex(result), len(result), self.golds)
         return result
 
-    # ------------------------------------------------------------------- lecture
+    # ------------------------------------------------------------------- reads
     def gold_table(self) -> dict[str, dict[str, int]]:
         return {w.account: {"ok": w.gold_ok, "ko": w.gold_ko, "accuracy": w.accuracy_pct}
                 for w in self.contract.workers.values()}

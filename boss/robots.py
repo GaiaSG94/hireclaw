@@ -1,4 +1,4 @@
-"""Robots : un client, trois travailleurs soigneux, un brouillon, un tricheur."""
+"""Robots: one client, three careful workers, one sloppy, one cheater."""
 from __future__ import annotations
 
 import random
@@ -17,7 +17,7 @@ class RobotWorker:
     rng: random.Random = field(default_factory=random.Random)
 
     def answer(self, item) -> tuple[str, int]:
-        """Retourne (choix, latence_ms)."""
+        """Returns (choice, latency_ms)."""
         if self.profile == "cheater":
             return item.choices[0], 120
         if self.rng.random() < self.accuracy:
@@ -35,7 +35,7 @@ class RobotWorker:
 
 
 def crew(seed: int = 7) -> list[RobotWorker]:
-    """Les cinq robots de la démo : 3 soigneux, 1 brouillon, 1 tricheur."""
+    """The five demo robots: 3 careful, 1 sloppy, 1 cheater."""
     return [
         RobotWorker("alice", Key(), 0.95, "careful", random.Random(seed + 1)),
         RobotWorker("bob", Key(), 0.95, "careful", random.Random(seed + 2)),
@@ -47,7 +47,7 @@ def crew(seed: int = 7) -> list[RobotWorker]:
 
 @dataclass
 class RobotClient:
-    """Client humain simulé : il paie la commande d'avance."""
+    """Simulated human client: pays for the order upfront."""
     accounting: str
     budget: int
     key: Key = field(default_factory=Key)
