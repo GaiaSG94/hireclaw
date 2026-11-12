@@ -118,8 +118,8 @@ def _demo_report() -> dict:
 
 
 # ---------------------------------------------------------------------- rejeu
-# Correspondance kind du registre -> fx du front (HANDOFF-CLAUDE.md) et etape du
-# rail (0 commande, 1 marge, 2 embauche, 3 controles, 4 majorite, 5 paie,
+# Correspondance kind du registre -> fx du front (HANDOFF-CLAUDE.md) et étape du
+# rail (0 commande, 1 marge, 2 embauche, 3 contrôles, 4 majorité, 5 paie,
 # 6 refus, 7 renvoi, 8 livraison).
 KIND_FX = {"order": "order", "accept": "margin", "hire": "hire", "payroll": "pay",
            "fire": "fire", "sale": "deliver", "margin": "split", "claim": "pay",
@@ -142,10 +142,10 @@ def _event_fx(kind: str, reason: str) -> str | None:
 
 
 def _replay_events(contract, names: dict) -> list[dict]:
-    """Le registre integral, annote : etape du rail, fx, nom du robot concerne.
+    """Le registre intégral, annoté : étape du rail, fx, nom du robot concerné.
 
-    Les cles Ed25519 sont regenerees a chaque run : on traduit les comptes en
-    noms de robots pour que l'interface reste lisible d'un appel a l'autre.
+    Les clés Ed25519 sont regénérées à chaque run : on traduit les comptes en
+    noms de robots pour que l'interface reste lisible d'un appel à l'autre.
     """
     events = []
     prefix = {account[:8]: name for account, name in names.items()}
@@ -165,8 +165,8 @@ def _replay_events(contract, names: dict) -> list[dict]:
 
 
 def replay_report() -> dict:
-    """Le rejeu deterministe complet : registre annote (stage + fx), attaques,
-    solvabilite, livraison, invariants. Source de /api/replay."""
+    """Le rejeu déterministe complet : registre annoté (stage + fx), attaques,
+    solvabilité, livraison, invariants. Source de /api/replay."""
     return _cached("replay", 300, _replay_report)
 
 

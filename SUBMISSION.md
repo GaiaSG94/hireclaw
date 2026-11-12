@@ -66,7 +66,7 @@ porter les règles du travail lui-même.
 | Agent | `agent.hireclaw.defraie.testnet` |
 | Client | `client.hireclaw.defraie.testnet` |
 | Jeton | `usd.panneau.testnet` (NEP-141, 6 décimales) |
-| WASM | 214 Ko |
+| WASM | 244,4 Ko |
 | ABI | NEAR 0.4.0, 31 méthodes dans le dépôt ; 30 déployées sur testnet (`promote` attend un redéploiement, faute de NEAR libre sur le compte contrat) |
 | sha256 du WASM | `bc2cdcd8be199d5ec1c84944acc8d1f4dbeaf6dd545aaea5fe541fdc88d9b4ca` |
 

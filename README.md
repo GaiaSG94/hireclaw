@@ -85,7 +85,7 @@ Fichiers < 500 lignes, fonctions < 50 lignes.
 - `C-I5` aucun renvoi sans les compteurs requis.
 - `C-I6` l'agent ne paie que des travailleurs embauchés ; le pire cas reste borné par les plafonds.
 
-## Le site : tout le projet en six pages
+## Le site : tout le projet en sept pages
 
 | Page | Contenu |
 |---|---|
@@ -93,6 +93,7 @@ Fichiers < 500 lignes, fonctions < 50 lignes.
 | `/boss` | Le tableau du patron : avancement, budget de paie, marge, travailleurs, paiements, décisions |
 | `/ledger` | Le registre local **et** un bloc lu en direct du contrat testnet |
 | `/demo` | La démo déterministe rejouée à la demande : commande, équipage, renvois, **11 attaques refusées**, livraison, invariants |
+| `/scene` | La scène 3D : le scénario en 15 étapes, jouable, annoté par le rejeu réel `GET /api/replay` |
 | `/testnet` | Le contrat réel : adresses, règles on-chain, solvabilité lue sur la chaîne, **14 transactions de preuve**, ABI du build courant (31 méthodes), empreinte du WASM |
 | `/code` | L'inventaire du dépôt : fichiers, lignes, limites respectées, tests, commit, et le README intégral |
 

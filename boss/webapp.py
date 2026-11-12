@@ -16,7 +16,7 @@ from .money import fmt, usdc
 from .world import World
 
 WEB = Path(__file__).resolve().parent.parent / "web"
-SCENE_JS = ("/v7-data.js", "/v9-engine.js", "/v9-ui.js", "/scene-replay.js")
+SCENE_JS = ("/v7-data.js", "/v9-steps.js", "/v9-engine.js", "/v9-ui.js", "/scene-replay.js")
 PAGE_TTL_S = 0.25
 
 
