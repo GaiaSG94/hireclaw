@@ -3,28 +3,29 @@
 (function () {
   "use strict";
 
-  // The first case is the one the code really runs. The other two only change
-  // the intro text and the size of the network: the amounts played stay 1.20 USDC.
+  // What only humans can give. The amounts played by the scenario stay those of
+  // the job the code really runs (1.20 USDC, 12 items): the cases change the intro
+  // text and the size of the network only.
   const USE_CASES = [
     {
       id: "individual", label: "Individual",
-      title: "Which e-bike should I buy?",
-      who: "Camille · 34 · Bordeaux",
-      need: "200 conflicting reviews to read, rate and summarise",
-      budget: "12 USDC", tasks: "200 reviews", workers: 5
+      title: "What do real people think?",
+      who: "Camille · opening a bakery in March",
+      need: "Five names for the shop. Fifty strangers pick one and say why — a real opinion, not an AI's guess, without hiring a survey firm",
+      budget: "5 USDC", tasks: "250 votes", workers: 5
     },
     {
-      id: "sme", label: "E-commerce SME",
-      title: "50,000 reviews to moderate every month",
-      who: "A shoe retailer · €40M revenue",
-      need: "Classify reviews, flag fake ones, enrich product pages",
-      budget: "6,000 USDC / month", tasks: "50,000 reviews", workers: 18
+      id: "sme", label: "Small business",
+      title: "A human signs off every AI reply",
+      who: "A 12-person insurance broker",
+      need: "Before an AI-written answer reaches a customer, a person approves or corrects it. The business stays accountable for what it sends",
+      budget: "300 USDC / month", tasks: "3,000 replies", workers: 18
     },
     {
       id: "lab", label: "AI lab",
       title: "Human taste to train the model",
       who: "A foundation-model lab · design",
-      need: "Rank pairs of mock-ups — modern, beautiful, dated — with a reason",
+      need: "Rank pairs of mock-ups — modern, beautiful, dated — with a reason. Human preference is the data; a model cannot produce it for itself",
       budget: "250,000 USDC / month", tasks: "1.2M comparisons", workers: 36
     }
   ];

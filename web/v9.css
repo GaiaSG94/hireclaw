@@ -150,3 +150,28 @@ code { font-family: var(--f-mono); }
 .embed .caption h1 { font-size: 44px !important; } .embed .caption p { font-size: 20px; max-width: 40ch; margin: 0; } .embed .caption code { display: none; } .embed .caption .who { font-size: 17px; justify-content: flex-start; }
 .embed .ruler { left: 40px; right: 40px; }
 @media (prefers-reduced-motion: reduce) { .caption.in * { animation: none !important; } .idle .run { animation: none; } }
+
+/* ------------------------------------------------------- live terminal */
+.term { position: fixed; z-index: 9; background: #0a0a0b; color: #f5f5f4; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+  font-family: var(--f-mono); font-size: 12px; line-height: 1.6; box-shadow: 0 18px 40px -22px rgba(10,10,11,.55); }
+.term header { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.14); flex: none; }
+.term header i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid rgba(255,255,255,.45); }
+.term header b { font-weight: 500; margin-left: 8px; }
+.term header span { margin-left: auto; color: rgba(255,255,255,.5); font-size: 11px; white-space: nowrap; }
+.term pre { margin: 0; padding: 12px 14px 14px; overflow-y: auto; flex: 1; font: inherit; white-space: pre-wrap; word-break: break-word; scrollbar-width: none; }
+.term pre div { animation: termIn .18s ease both; }
+.term pre .h { margin-top: 8px; } .term pre .h:first-child { margin-top: 0; }
+.term pre .h b { font-weight: 600; } .term pre u { text-decoration: none; color: rgba(255,255,255,.55); }
+.term pre .dim { color: rgba(255,255,255,.5); }
+.term pre .x { color: #fff; } .term pre .x::before { content: "× "; margin-left: -2px; }
+.term pre .ok b { background: #fff; color: #0a0a0b; padding: 1px 7px; border-radius: 999px; font-weight: 600; }
+@keyframes termIn { from { opacity: 0; transform: translateY(3px); } }
+.term-right .term { right: 28px; top: 148px; bottom: 132px; width: 372px; }
+.term-right.x-caption .caption { left: calc(50% - 190px); }
+.term-below .term { right: 28px; bottom: 128px; width: min(620px, 46vw); height: 196px; }
+.term-below.x-caption .caption { left: 40px; transform: none; text-align: left; max-width: min(560px, 44vw); bottom: 118px; }
+.term-below.x-caption .caption .who { justify-content: flex-start; } .term-below.x-caption .caption p { margin-inline: 0; }
+.term-below.x-caption .caption h1 { font-size: clamp(30px, 3.6vw, 50px); }
+.idle .term { opacity: .55; }
+a.ghost { text-decoration: none; }
+@media (max-width: 1100px) { .term { display: none; } }

@@ -98,7 +98,7 @@ Invariants checked after every run:
 
 | Page | Content |
 |---|---|
-| `/scene` | The scenario in 15 steps, playable, annotated with the real ledger (`GET /api/replay`) |
+| `/scene` | The scenario in 15 steps, playable, with a live terminal printing the real ledger (`GET /api/replay`) |
 | `/work` | The visitor works: Ed25519 key in the browser, signed answer, payment or reasoned rejection |
 | `/boss` | The boss's board: progress, payroll budget, margin, workers, payments, decisions |
 | `/ledger` | The local ledger and a block read live from the testnet contract |

@@ -14,12 +14,14 @@
   if (!document.body || !document.body.dataset.plate) return;
 
   const id = document.body.dataset.plate, cfg = Object.assign({}, PLATES[id] || PLATES["05"]);
-  cfg.pad = [96, 80, 320, 80];           // top, right, bottom, left kept free for the interface
+  const TERM = new URLSearchParams(location.search).get("term") || "right";   // right · below · off
+  // top, right, bottom, left kept free for the interface
+  cfg.pad = TERM === "right" ? [96, 440, 320, 60] : TERM === "below" ? [96, 80, 360, 80] : [96, 80, 320, 80];
   cfg.fontUI = GROT; cfg.fontMono = MONO;
   const R = document.documentElement.style;
   R.setProperty("--f-ui", GROT); R.setProperty("--f-display", SERIF); R.setProperty("--f-mono", MONO);
   R.setProperty("--acc", cfg.accent || "#0a0a0b");
-  document.body.className = "x-" + cfg.explain + " t-" + cfg.type;
+  document.body.className = "x-" + cfg.explain + " t-" + cfg.type + " term-" + TERM;
   document.title = "Hireclaw — the scene";
 
   const STEPS = window.HC9.STEPS, HC = window.HC;
@@ -36,8 +38,11 @@
     '<nav class="ctls">' +
       seg("segCase", "Use case", HC.USE_CASES.map((u, i) => [String(i), u.label])) +
       seg("segPhase", "Scale", [["0", "Phase 1"], ["1", "Network"]]) +
+      '<div class="ctl"><span>Terminal</span><div class="seg" id="segTerm">' + [["right", "Right"], ["below", "Below"], ["off", "Off"]].map(o =>
+        '<button data-v="' + o[0] + '"' + (o[0] === TERM ? ' class="on"' : "") + ">" + o[1] + "</button>").join("") + "</div></div>" +
     "</nav>" +
     '<div class="acts"><button class="ghost" id="openAll">Whole project</button>' +
+    (STATIC ? "" : '<a class="ghost" href="/work">Work for the AI →</a>') +
     '<button class="run" id="run"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 0l8 5-8 5z" fill="currentColor"/></svg><span>Run the scenario</span></button></div></header>' +
     '<section class="caption" id="caption"><div class="who" id="cWho"></div><h1 id="cTitle"></h1><p id="cDesc"></p><code id="cCode"></code></section>' +
     '<div class="ruler" id="ruler">' + STEPS.map((s, i) => '<button data-i="' + i + '" title="' + s.t + '"></button>').join("") + "</div>" +
@@ -62,6 +67,7 @@
   const $ = s => document.getElementById(s), cap = $("caption");
   const world = window.HC9.create($("space"), cfg, {
     onStep(i, s, m, st) {
+      document.dispatchEvent(new CustomEvent("hc9:step", { detail: { i: i, step: s, total: st.total } }));
       const uc = HC.USE_CASES[curCase];
       document.body.classList.toggle("idle", i < 0);
       if (i < 0) {
@@ -94,6 +100,7 @@
   function bind(idn, fn) { $(idn).querySelectorAll("button").forEach(b => b.onclick = () => { $(idn).querySelectorAll("button").forEach(o => o.classList.toggle("on", o === b)); fn(b.dataset.v); }); }
   bind("segCase", v => { curCase = +v; world.setCase(curCase, curPhase === 1); });
   bind("segPhase", v => { curPhase = +v; world.setCase(curCase, curPhase === 1); });
+  bind("segTerm", v => { const u = new URL(location.href); u.searchParams.set("term", v); location.href = u.toString(); });
   $("run").onclick = () => world.toggle();
   $("next").onclick = () => world.next(); $("prev").onclick = () => world.prev();
   document.querySelectorAll("#ruler button").forEach(el => el.onclick = () => { world.pause(); world.goto(+el.dataset.i); });

@@ -172,3 +172,9 @@ video { width: 100%; max-height: 70vh; border-radius: 14px; border: 1px solid va
   .stats { grid-template-columns: repeat(2, 1fr); }
   main { padding-top: 28px; }
 }
+
+.how { margin: 14px 0 14px; padding: 0; list-style: none; counter-reset: how; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.how li { counter-increment: how; border-top: 1px solid var(--text); padding-top: 10px; font-size: 13.5px; color: var(--muted); }
+.how li::before { content: counter(how); display: block; font-family: var(--f-mono); font-size: 11px; color: var(--text); margin-bottom: 4px; }
+.how li b { color: var(--text); }
+@media (max-width: 760px) { .how { grid-template-columns: 1fr; } }
