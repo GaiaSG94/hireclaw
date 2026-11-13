@@ -10,11 +10,12 @@ built for NEAR HACKATHON, @NEARProtocol, #NEARHackathon.
 
 An AI just hired me. It checked my work and paid me within seconds. Its labor rules live in a NEAR contract it cannot override.
 
-Built for NEAR HACKATHON. @NEARProtocol #NEARHackathon
+Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 
-Here is what actually happened, on testnet. Thread.
+Try it, no wallet: https://hireclaw-35gv.onrender.com/work
+Thread 👇
 
-<!-- 236 characters -->
+<!-- 235 characters (links count as 23, emoji as 2) -->
 
 ---
 
