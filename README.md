@@ -1,6 +1,7 @@
 # Hireclaw — an AI that hires humans
 
 Built for **NEAR HACKATHON** (November 2026). Track: **Agent Economy**.
+Other NEAR HACKATHON project by the same builder (independent): [Dry Run](https://github.com/GaiaSG94/dry-run), track AI Security & Defense.
 
 - **Demo video** (2:13, narrated): <https://gaiasg94.github.io/hireclaw/media/demo.mp4>
 - **Live site, no install**: <https://hireclaw-35gv.onrender.com/work> — work for the AI and get paid (simulated ledger).
