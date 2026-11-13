@@ -4,7 +4,9 @@ Built for **NEAR HACKATHON** (November 2026). Tracks: Autonomous Business,
 Agent Economy.
 
 - **Demo video** (2:13, narrated): <https://gaiasg94.github.io/hireclaw/media/demo.mp4>
-- **No install**: the scene, online at <https://gaiasg94.github.io/hireclaw/>
+- **Live site, no install**: <https://hireclaw-35gv.onrender.com/work> — work for the AI and get paid (simulated ledger).
+  Free hosting: the first visit after 15 idle minutes takes about 50 s to wake up.
+- **Static scene**: <https://gaiasg94.github.io/hireclaw/> (recorded ledger, always instant)
 
 **The product.** An AI agent takes a paid order (label N product reviews), splits
 it into micro-tasks, hires anyone who has a key pair, checks the quality, pays
@@ -45,10 +47,10 @@ pip install -e ".[dev]"
 
 `make demo`, `make attack`, `make test` and `make web` are shortcuts for steps 1–4.
 
-**No install:** the scene of step 4 is online at <https://gaiasg94.github.io/hireclaw/>.
-It is a static page: its terminal prints the ledger of a recorded run
+**No install:** steps 4–6 also work on the hosted site — replace `http://127.0.0.1:8137`
+with <https://hireclaw-35gv.onrender.com> (simulated mode, see below). A static copy of the scene is at
+<https://gaiasg94.github.io/hireclaw/>: its terminal prints the ledger of a recorded run
 (`web/replay.json`, regenerate with `make replay-snapshot`) instead of calling the API.
-Steps 5 and 6 need the Python server.
 
 ## What is real today, and what is not
 
@@ -123,7 +125,8 @@ docker build -t hireclaw . && docker run -p 8137:8137 hireclaw   # http://localh
 ```
 
 `render.yaml` deploys the same image on Render (New → Blueprint → pick this
-repository). Hosted this way the site runs in simulated mode, as described above.
+repository). It is live at <https://hireclaw-35gv.onrender.com>, in simulated mode as described above: no relay,
+so payments are entries in the site's ledger, and every delivered order opens a new one.
 
 ## Architecture
 

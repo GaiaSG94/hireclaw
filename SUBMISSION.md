@@ -9,6 +9,7 @@ cannot deviate from these rules.
 
 - Public repository: <https://github.com/GaiaSG94/hireclaw>
 - Demo video (2:13, narrated): <https://gaiasg94.github.io/hireclaw/media/demo.mp4>
+- Live site, no install: <https://hireclaw-35gv.onrender.com/work> (simulated ledger; ~50 s to wake after 15 idle minutes)
 - No-install scene (static, recorded ledger): <https://gaiasg94.github.io/hireclaw/>
 - Contract on NEAR testnet: `hireclaw.defraie.testnet`
 - Explorer: <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>
@@ -121,8 +122,8 @@ rejects the transaction.
 | `/testnet` | addresses, on-chain rules, solvency read from the chain, proof transactions, ABI |
 | `/code` | repository inventory, tests, README |
 
-Online without install: the scene at <https://gaiasg94.github.io/hireclaw/> (static
-copy, recorded ledger). Locally: `python -m boss.webapp`, then <http://127.0.0.1:8137/work>.
+Online: <https://hireclaw-35gv.onrender.com> (all 7 pages, simulated mode). Static scene:
+<https://gaiasg94.github.io/hireclaw/>. Locally: `python -m boss.webapp`, then <http://127.0.0.1:8137/work>.
 
 ### 3.6 C-F14: the signed work ticket
 
@@ -317,7 +318,7 @@ cannot live on it, whereas a well-equipped human, in a few minutes, can.
   testnet cycle above, not the demo.
 - **The static copy replays a recorded run.** <https://gaiasg94.github.io/hireclaw/>
   has no server behind it: its terminal prints the ledger of a recorded run
-  (`web/replay.json`). Working on `/work` needs the Python server.
+  (`web/replay.json`). To work on `/work`, use the hosted site <https://hireclaw-35gv.onrender.com/work>.
 - **No meta-transaction for `claim_unpaid`.** The claim still requires the worker
   to send a transaction themselves (with an account funded in NEAR); the full
   implementation of the signed work ticket in a browser wallet is not done.

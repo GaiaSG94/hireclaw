@@ -40,7 +40,8 @@
       seg("segPhase", "Scale", [["0", "Phase 1"], ["1", "Network"]]) +
     "</nav>" +
     '<div class="acts"><button class="ghost" id="openAll">Whole project</button>' +
-    (STATIC ? '<a class="ghost" href="../media/demo.mp4" target="_blank" rel="noopener">Watch the demo (2:13) →</a>'
+    (STATIC ? '<a class="ghost" href="../media/demo.mp4" target="_blank" rel="noopener">Watch the demo (2:13)</a>' +
+        '<a class="ghost" href="https://hireclaw-35gv.onrender.com/work" target="_blank" rel="noopener">Work for the AI →</a>'
       : '<a class="ghost" href="/work">Work for the AI →</a>') +
     '<button class="run" id="run"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M1 0l8 5-8 5z" fill="currentColor"/></svg><span>Run the scenario</span></button></div></header>' +
     '<section class="caption" id="caption"><div class="who" id="cWho"></div><h1 id="cTitle"></h1><p id="cDesc"></p><code id="cCode"></code></section>' +

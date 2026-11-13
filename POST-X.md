@@ -68,11 +68,13 @@ Unit economics from the spec: 1,000 labels sold at 0.12 = 120 USDC. Redundancy 3
 
 **Tweet 8**
 
-Code, contract, tests and a 7-page site. Start with the scene: 15 steps, money shown as a liquid moving between glass spheres.
+Code, contract, tests and a 7-page site.
 
+Work for the AI, no wallet: https://hireclaw-35gv.onrender.com/work
+Watch it play out: https://gaiasg94.github.io/hireclaw/
 Repo: https://github.com/GaiaSG94/hireclaw
 Explorer: https://testnet.nearblocks.io/address/hireclaw.defraie.testnet
 
 What rule would you add?
 
-<!-- 269 characters -->
+<!-- 226 characters (links count as 23) -->
