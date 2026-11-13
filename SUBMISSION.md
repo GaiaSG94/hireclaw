@@ -13,6 +13,7 @@ cannot deviate from these rules.
 - No-install scene (static, recorded ledger): <https://gaiasg94.github.io/hireclaw/>
 - Contract on NEAR testnet: `hireclaw.defraie.testnet`
 - Explorer: <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>
+- Other NEAR HACKATHON project by the same builder (independent): [Dry Run](https://github.com/GaiaSG94/dry-run), track Security
 
 ---
 
