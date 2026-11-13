@@ -20,7 +20,7 @@ test-contract:
 	@cd contract && cargo test
 
 test-sandbox: build-contract
-	@cd contract/integration-tests && NEAR_SANDBOX_BIN_PATH=$${NEAR_SANDBOX_BIN_PATH:-/home/baptiste/.local/near-sandbox/near-sandbox} cargo test --test t01_sandbox
+	@cd contract/integration-tests && NEAR_SANDBOX_BIN_PATH=$${NEAR_SANDBOX_BIN_PATH:-$$(command -v near-sandbox)} cargo test --test t01_sandbox
 
 web:
 	@$(PY) -m boss.webapp --port $(PORT)

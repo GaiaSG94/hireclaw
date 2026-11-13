@@ -142,6 +142,7 @@ so payments are entries in the site's ledger, and every delivered order opens a 
 | `boss/attack.py` | The attack suite, one expected code per attack |
 | `boss/chain.py`, `scripts/relay.mjs` | Optional bridge to testnet: the relay signs with the agent key |
 | `web/` | The pages; `web/v9-*.js` is the scene (canvas 2D, no dependency) |
+| `tools/` | Two throwaway testnet contracts used only to redeploy on the same account: `stub-contract` frees the old code's storage, `wiper` clears leftover state |
 
 Amounts are integers in micro-USDC (`0.02` → `20000`), never floats.
 Every file is under 500 lines and every function under 50 lines.
