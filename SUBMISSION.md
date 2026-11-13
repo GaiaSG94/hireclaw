@@ -9,7 +9,7 @@ cannot deviate from these rules.
 
 - Public repository: <https://github.com/GaiaSG94/hireclaw>
 - Demo video (2:13, narrated): <https://gaiasg94.github.io/hireclaw/media/demo.mp4>
-- Live site, no install: <https://hireclaw-35gv.onrender.com/work> (simulated ledger; ~50 s to wake after 15 idle minutes)
+- Live site, no install: <https://hireclaw-35gv.onrender.com/work> (simulated ledger; kept warm by a scheduled ping, so the first visit is instant)
 - No-install scene (static, recorded ledger): <https://gaiasg94.github.io/hireclaw/>
 - Contract on NEAR testnet: `hireclaw.defraie.testnet`
 - Explorer: <https://testnet.nearblocks.io/address/hireclaw.defraie.testnet>

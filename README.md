@@ -5,7 +5,7 @@ Other NEAR HACKATHON project by the same builder (independent): [Dry Run](https:
 
 - **Demo video** (2:13, narrated): <https://gaiasg94.github.io/hireclaw/media/demo.mp4>
 - **Live site, no install**: <https://hireclaw-35gv.onrender.com/work> — work for the AI and get paid (simulated ledger).
-  Free hosting: the first visit after 15 idle minutes takes about 50 s to wake up.
+  The service is kept warm by a scheduled ping, so the first visit is instant; if it ever sleeps, the wake-up takes about 50 s.
 - **Static scene**: <https://gaiasg94.github.io/hireclaw/> (recorded ledger, always instant)
 
 **The product.** An AI agent takes a paid order (label N product reviews), splits

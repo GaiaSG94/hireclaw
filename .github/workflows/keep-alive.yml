@@ -1,0 +1,36 @@
+name: keep-alive
+
+# Render's free plan spins the web service down after 15 minutes without traffic,
+# so the first visitor of a session waits ~50 s for the container to wake up.
+# The submitted URL (https://hireclaw-35gv.onrender.com) must stay exactly the
+# same, so instead of changing the link we keep the service warm: this workflow
+# pings it every minute for 10 minutes, and a scheduled run starts every 5
+# minutes. GitHub Actions is free on public repositories.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Keep the site awake
+        run: |
+          set -euo pipefail
+          url="https://hireclaw-35gv.onrender.com/scene"
+          for i in $(seq 1 10); do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 25 "$url" || echo "000")
+            echo "[$(date -u +%H:%M:%S)] ping $i -> HTTP $code"
+            [ "$code" = "200" ] || exit 1
+            [ "$i" = "10" ] || sleep 60
+          done
