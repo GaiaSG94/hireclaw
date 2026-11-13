@@ -16,12 +16,11 @@ cannot deviate from these rules.
 
 ---
 
-## 1. Target tracks
+## 1. Target track
 
 | Track | Why we claim it |
 |---|---|
-| business / Autonomous Business | The agent is a single-function company: receive an order, produce a deliverable, collect payment. All the business logic (payroll budget, margin, reserves, kill switch) is executed by a contract, not by a spreadsheet: it is an autonomous business whose financial invariants are verified (`get_solvency` → `balanced: true`). |
-| agents / Agent Economy | This is the core of the project: an agent that is the *principal*, that hires, checks, pays, rejects and delivers. The other half of the agent economy — the half that produces human work at a machine's request — did not exist as a protocol. Here the agent depends on human recommendations, and those recommendations become a market with prices, checks and recourse, all inside the contract. |
+| agents / Agent Economy | This is the core of the project: an agent that is the *principal*, that hires, checks, pays, rejects and delivers. The other half of the agent economy — the half that produces human work at a machine's request — did not exist as a protocol. Here the agent depends on human recommendations, and those recommendations become a market with prices, checks and recourse, all inside the contract. The agent runs a single-function business on top of it (receive an order, produce a deliverable, collect payment) and all of its business logic — payroll budget, margin, reserves, kill switch — is executed by the contract, not by a spreadsheet, with the financial invariants verified on-chain (`get_solvency` → `balanced: true`). |
 
 ---
 
